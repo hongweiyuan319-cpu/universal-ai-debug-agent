@@ -1,0 +1,49 @@
+# ============================================================
+# Universal AI Debug Agent · 项目档案模板（project-profile.yaml）
+# ============================================================
+# 怎么用：把本文件复制一份（例如 cp templates/project-profile.yaml my-profile.yaml），
+#         再把示例值改成你自己项目的信息。
+#
+# 填写规则：
+#   1. 只有 project_name、repository_path 是必填的，其余都可以不写；
+#   2. 用不到的字段请整行删除（或在行首加 # 注释掉），
+#      不要写成 `backend: ""` 这种空值 —— 空字符串和纯空格都会被拒绝；
+#   3. startup、business_rules 整块都可以省略，省略时按“没有填写”处理；
+#   4. 下面 startup 里的启动命令只是文本记录，系统不会去执行它们；
+#   5. 不要在这里写密码、Token、Cookie 或私钥等敏感信息。
+#
+# 提醒：本模板只包含当前数据模型支持的字段。
+#       设计文档里提到的 business_description、test_scope、test_accounts 等
+#       尚未实现，写进来会因“未知字段”被直接拒绝，请先不要添加。
+
+# 【必填】项目名称：给被测项目起一个好认的名字。
+project_name: "login-register-demo"
+
+# 【必填】代码仓库路径：被测项目在本机上的绝对路径。
+# 说明：这里只检查格式，不检查路径是否真实存在（那属于运行环境问题）。
+repository_path: "/absolute/path/to/login-register-demo"
+
+# 【可省略】启动信息：需要把系统真正跑起来时才会用到。
+startup:
+  # 【可省略】后端启动命令，写成一整行文本，例如启动 Flask。
+  backend: "python backend/app.py"
+
+  # 【可省略】前端启动命令，例如启动 React 开发服务器。
+  frontend: "npm --prefix frontend run dev"
+
+  # 【可省略】系统访问地址：必须是 http:// 或 https:// 开头的合法地址。
+  # 前后端都启动时，这里填用户实际在浏览器里打开的地址。
+  base_url: "http://localhost:3000"
+
+# 【可省略】业务规则：整块省略时视为空列表。
+# 这是判断“算不算 Bug”的最高依据：代码说明“系统做了什么”，
+# 规则说明“系统应该做什么”。id 和 rule 都必须填写，且不能为空。
+business_rules:
+  - id: "R-REG-001"
+    rule: "用户名不能为空"
+
+  - id: "R-REG-002"
+    rule: "用户名长度不得少于 6 位"
+
+  - id: "R-REG-003"
+    rule: "密码长度不得少于 6 位"

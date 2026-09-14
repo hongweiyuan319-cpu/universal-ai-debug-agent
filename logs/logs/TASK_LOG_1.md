@@ -4,7 +4,7 @@
 
 维护原则：顶部“当前快照”随进度更新；底部“历史任务记录”只追加、不覆盖。不要粘贴完整聊天、完整源代码或冗长终端输出。
 
-最后更新：2026-09-14 05:29 UTC
+最后更新：2026-09-14 05:31 UTC
 
 日志维护者：GitHub Copilot
 
@@ -63,12 +63,13 @@
 - 定义并校验“仓库扫描结果”的数据格式（`RepositorySummary` / `Finding` / `SourceType`）；
 - 定义并校验“系统地图”的数据格式（`SystemMap` / `FrontendPage` / `FrontendRequest` / `BackendRoute` / `DataModel` / `CallChain` 及 3 个枚举），并检查同类对象 ID 是否重复、调用链引用是否真实存在；
 - 所有“结论型”数据强制携带来源类型、来源文件、定位与 0～1 置信度；
+- 提供一份人工可填的项目档案模板 `templates/project-profile.yaml`（键名与模型严格一致，带中文注释与示例规则）；
 - 拒绝空字符串、纯空格字符串、拼错的字段名、非 http/https 的 `base_url`、越界置信度、非法的来源类型、非法 HTTP 方法、无效状态码；
 - 把模型安全地转换为 Python 字典与 JSON，并导出 JSON Schema。
 
 尚不能做到（**定义了数据格式 ≠ 系统已经能生成它**）：
 
-- 读取 `project-profile.yaml`（YAML 解析未实现）；
+- 读取 `project-profile.yaml`：模板已就位（T006），但**没有 YAML 解析器**，文件还读不进来；
 - 扫描仓库、识别技术栈与入口文件（只有数据契约，没有扫描逻辑）；
 - 识别 Flask 路由、React 页面、表单字段、调用链（属于 T009～T011）；
 - **自动生成 `system_map.json`**：`SystemMap` 目前只能手工构造，没有任何代码去填充它；
@@ -80,13 +81,13 @@
 
 | 项目 | 当前值 |
 |---|---|
-| 当前任务 | T002-B：配置 GitHub 远程仓库并首次推送 |
+| 当前任务 | T006：创建 project-profile.yaml 模板 |
 | 当前状态 | completed |
-| 上一个完成任务 | T005：定义 SystemMap 数据模型 |
-| 下一任务 | T006：创建 project-profile.yaml 模板 |
-| 当前里程碑完成度 | Day 1 清单 4/6 项；Week 1 共 7 天，处于 Day 1 |
+| 上一个完成任务 | T002-B：配置 GitHub 远程仓库并首次推送 |
+| 下一任务 | T007：建立 run_discovery.py 命令行入口 |
+| 当前里程碑完成度 | Day 1 清单 5/6 项；Week 1 共 7 天，处于 Day 1 |
 | 阻塞项 | 无 |
-| 最后一次成功验证 | 2026-09-14 05:23 UTC；首次推送成功（`origin/main` = `ea3d6d3`，14 个文件，与本地完全一致） |
+| 最后一次成功验证 | 2026-09-14 05:31 UTC；模板一致性验证（17/17 PASS，覆盖任务要求的 12 项） |
 | 日志维护者 | GitHub Copilot |
 
 ### 状态定义
@@ -109,11 +110,11 @@
 | T001 | 建立项目骨架与目录结构 | completed | `core/`、`schemas/`、`templates/`、`artifacts/` 四个目录就位 | 无 |
 | T002 | 环境与现状检查（只读） | completed | 确认解释器、依赖缺口、无测试框架、非 Git 仓库 | T001 |
 | T002-A | 落实 Q002 / Q003：Git 版本控制与依赖锁定 | completed | `git init -b main` 成功；`requirements.lock` 与 `pip freeze` 完全一致 | T002、T004 |
-| T002-B | 配置 GitHub 远程仓库并首次推送 | completed | 仓库可见性 PRIVATE，`origin/main` 与本地 `HEAD` 同一提交（14 个文件） | T002-A、T005 |
+| T002-B | 配置 GitHub 远程仓库并首次推送 | completed | 先建 PRIVATE，后按用户要求改为 PUBLIC；`origin/main` 与本地 `HEAD` 同一提交（14 个文件） | T002-A、T005 |
 | T003 | 实现 ProjectProfile 数据模型 | completed | 三个模型通过 10 项最小验证 | T002 |
 | T004 | 定义 RepositorySummary 数据模型 | completed | 技术栈/依赖/入口文件可通过 Pydantic 校验，每条结论带来源与置信度（26/26 PASS） | T003 |
 | T005 | 定义 SystemMap 数据模型 | completed | 页面/API/路由/数据模型/调用链可通过 Pydantic 校验，并检查重复 ID 与悬空引用（49/49 PASS） | T004 |
-| T006 | 创建 project-profile.yaml 模板 | planned | 模板字段与 `ProjectProfile` 完全一致 | T003 |
+| T006 | 创建 project-profile.yaml 模板 | completed | 键名与 `ProjectProfile` / `StartupInfo` / `BusinessRule` 完全一致，含中文注释与 3 条示例规则（17/17 PASS） | T003 |
 | T007 | 建立 run_discovery.py 命令行入口 | planned | 一条命令生成 `artifacts/task_<id>/` 目录 | T006 |
 | T008 | 仓库扫描与技术栈识别（Day 2） | planned | 输出 `repository_summary.json` | T007 |
 | T009 | Flask 后端分析器（Day 3） | planned | 输出 `backend_apis` 列表 | T008 |
@@ -140,7 +141,7 @@ Day 1 清单进度：
 - [x] 定义 `RepositorySummary`：语言、框架、依赖、入口文件；
 - [x] 定义 `SystemMap`：页面、API、后端路由、数据模型、调用链；
 - [ ] 建立 `run_discovery.py` 命令行入口；
-- [ ] 创建 `project-profile.yaml` 模板。
+- [x] 创建 `project-profile.yaml` 模板。
 
 ---
 
@@ -155,7 +156,9 @@ Day 1 清单进度：
 | `schemas/project_profile.py` | `BusinessRule`、`StartupInfo`、`ProjectProfile` | 已验证 | T003 |
 | `schemas/repository_summary.py` | `Finding`、`SourceType`、`RepositorySummary` | 已验证 | T004 |
 | `schemas/system_map.py` | `FrontendPage`、`FrontendRequest`、`BackendRoute`、`DataModel`、`CallChain`、`SystemMap` 及 `HttpMethod`、`CallChainStatus`、`DataModelKind` | 已验证 | T005 |
-| `templates/` | 配置模板目录（当前为空，仅 `.gitkeep`） | 未开始 | T001 |
+| `templates/` | 配置模板目录，含 `project-profile.yaml` | 已实现 | T006 |
+| `templates/project-profile.yaml` | 人工填写的项目档案模板（键名对齐当前模型） | 已验证 | T006 |
+| `templates/.gitkeep` | 空目录占位；已有真实文件后保留（无害），未删除 | 保留 | T006 |
 | `artifacts/` | 运行期产物目录（当前为空，仅 `.gitkeep`） | 未开始 | T001 |
 | `requirements.txt` | 运行依赖声明（`pydantic>=2,<3`），注释说明锁文件用法 | 已验证 | T002-A |
 | `requirements.lock` | 精确版本锁定（`pip freeze` 产物，5 个包） | 已验证 | T002-A |
@@ -164,7 +167,7 @@ Day 1 清单进度：
 | `logs/universal-ai-debug-agent-design.md` | 总体设计文档（V1 范围、架构、目录规划） | 已实现 | 无 |
 | `logs/week-1-code-understanding-plan.md` | 第 1 周任务清单（Day 1～Day 7） | 已实现 | 无 |
 | `logs/logs/TASK_LOG_template.md` | 本日志的模板与维护规则 | 已实现 | 无 |
-| `logs/logs/TASK_LOG_1.md` | 本文件 | 已实现 | T005 |
+| `logs/logs/TASK_LOG_1.md` | 本文件 | 已实现 | T006 |
 
 尚未建立（属于 V1 后期，本阶段不需要）：`app/`、`executors/`、`projects/`。
 
@@ -205,7 +208,7 @@ Day 1 清单进度：
 | 核心依赖 | pydantic 2.13.5、pydantic-core 2.46.5、annotated-types 0.8.0、typing-extensions 4.16.0、typing-inspection 0.4.4 |
 | 测试框架 | 暂未安装（本轮明确不引入 pytest） |
 | 依赖锁定 | `requirements.lock`（5 个包，与 `.venv` 当前安装完全一致） |
-| 是否为 Git 仓库 | 是（`main` 分支）；远程 `origin` → `git@github.com:hongweiyuan319-cpu/universal-ai-debug-agent.git`（PRIVATE） |
+| 是否为 Git 仓库 | 是（`main` 分支）；远程 `origin` → `git@github.com:hongweiyuan319-cpu/universal-ai-debug-agent.git`（先 PRIVATE，2026-09-14 按要求改为 **PUBLIC**） |
 
 其他可用但**不应使用**的解释器：`/usr/bin/python3`（3.9.6，CommandLineTools 自带）、`/opt/miniconda3/bin/python`（3.13.13，Conda base）。
 
@@ -658,13 +661,50 @@ T002 确认目录不是 Git 仓库，因此 `.gitignore` 与两个 `.gitkeep` �
 
 ---
 
+### D011：`project-profile.yaml` 严格匹配当前 `ProjectProfile`
+
+状态：accepted
+
+日期：2026-09-14
+
+关联任务：T006（相关 D003）
+
+**背景**
+
+设计文档 2.2 的选填表示例包含 `business_description`、`test_scope`、`test_accounts`、`reset`、`risk_focus`，而当前 `ProjectProfile` 只支持 `project_name`、`repository_path`、`startup`、`business_rules`，且开启了 `extra="forbid"`。两者不一致，模板必须二选一。
+
+**决定**
+
+模板只写当前模型支持的字段。不新增字段、不改用旧示例中的扩展字段名，差异记录在本日志（本节与 T006 历史记录）中。
+
+**原因**
+
+本周目标是“读懂一个 React + Flask 项目”，尚未需要业务描述、测试范围与测试账号；若现在先加字段，模型、模板、验证脚本要同时维护，而这些字段的语义（谁来填、填了之后影响什么）还未确定。宁可后补，也不要先定一个将来必须改的契约。
+
+**影响**
+
+- 正面：模板与模型零差异，写错字段会立即报错；`ProjectProfile` 的已验证行为不被扰动。
+- 代价：用户暂时无法在 YAML 里填写业务描述等上下文信息。
+- 后续约束：任何人不得在模板里加模型未定义的键；将来扩展必须新开任务，并重跑 T003～T006 的相关验证、刷新模板与日志。
+
+**考虑过的替代方案**
+
+- 一次性把设计文档里的字段全部实现：范围过大、语义未定，未选择。
+- 在模板里用注释保留扩展字段占位：容易被误填并触发 `extra_forbidden`，未选择。
+
+**替代关系**
+
+关闭 T006 开工前记录的范围冲突（原日志 8.1 的方案 A）。
+
+---
+
 ## 7. 已知限制、风险与阻塞
 
 ### 7.1 已知限制
 
 | ID | 限制 | 影响 | 计划处理阶段 |
 |---|---|---|---|
-| L001 | 不能读取 `project-profile.yaml`，只能手工构造 `ProjectProfile` | 无法从配置文件驱动流程 | T006 |
+| L001 | 模板已就位（T006），但仍**没有 YAML 解析器**，只能手工构造 `ProjectProfile` | 无法从配置文件驱动流程 | T012 |
 | L002 | 未实现仓库扫描与代码分析（`RepositorySummary` / `SystemMap` 仅有数据契约，无任何代码填充） | 无法产出 `repository_summary.json` 与 `system_map.json` | T008～T011 |
 | L003 | 没有正式测试套件（未安装 pytest） | 回归依赖一次性脚本，历史验证无法复现 | 见 Q001 |
 | L004 | ~~项目未纳入 Git 版本控制~~ **已解决（T002-A、T002-B）** | 已有变更历史，并已推送到私有远程仓库 | 已完成 |
@@ -694,66 +734,68 @@ T002 确认目录不是 Git 仓库，因此 `.gitignore` 与两个 `.gitkeep` �
 
 ### 8.1 下一任务
 
-任务编号：T006
+任务编号：T007
 
-任务名称：创建 project-profile.yaml 模板
+任务名称：建立 run_discovery.py 命令行入口
 
 当前状态：planned
 
-目标：在 `templates/` 下交付一份人工可填的 `project-profile.yaml` 模板，键名与 `ProjectProfile` 的校验规则一一对应，并附最小示例值（以登录注册 Demo 为例）。
+目标：在项目根目录新增 `run_discovery.py`，提供一条命令即可创建 `artifacts/task_<id>/` 任务目录并写出当前能产出的产物；仓库路径不存在时按“环境问题”报错退出。本轮不实现扫描与分析。
 
-**开工前必须先解决的范围冲突**：设计文档 2.2 的示例包含 `business_description`、`test_scope`、`test_accounts`、`reset`、`risk_focus`，而当前 `ProjectProfile` 只支持 `project_name`、`repository_path`、`startup`、`business_rules`，且开启了 `extra="forbid"` —— 模板写上述字段会被模型直接拒绝。两种处理方式：
+**开工前需要先定两件事**：
 
-- 方案 A（建议）：模板只包含模型当前支持的字段，保持 T006 单一职责；待 T012 真需要时再扩展 `ProjectProfile`；
-- 方案 B：在 T006 内同步扩展 `ProjectProfile`，会改动 T003 已验证代码，必须重跑 T003 回归。
+- **Q004**（`artifacts/` 产物是否入库）：T007 会生成第一个产物，而 `.gitignore` 目前**未忽略** `artifacts/`；不先定就会出现“产物自动进提交”的情况。建议先忽略 `artifacts/`。
+- **Q005**（何时引入 YAML 解析）：决定 T007 的 `--profile` 是“只校验文件存在”还是“直接解析并校验内容”。建议留到 T012。
 
 ### 8.2 开始前必须阅读
 
-- `logs/universal-ai-debug-agent-design.md`（2.2 固定格式选填表、2.3 表格设计原则）
-- `logs/week-1-code-understanding-plan.md`（Day 1 第 6 项、Day 6 选填表要求）
-- `schemas/project_profile.py`（模板键名必须与它一一对应）
-- 决定 D002、D003、D004、D005
+- `logs/universal-ai-debug-agent-design.md`（5 执行流程、9 项目目录、10 最终交付输出）
+- `logs/week-1-code-understanding-plan.md`（Day 1 第 5 项、Day 2 产出要求）
+- `schemas/__init__.py`（入口将来要构造哪些模型）
+- 决定 D001、D004、D005、D007、D008
 
 ### 8.3 开始前必须检查
 
 - 当前工作目录为 `/Users/hongweiyuan/Desktop/项目/QA_ai_agent`；
 - `.venv/bin/python -V` 输出 `Python 3.12.13`；
 - `.venv/bin/python -c "import pydantic; print(pydantic.VERSION)"` 输出 `2.13.5`；
-- `schemas/project_profile.py` 的实际内容与本日志描述一致；
-- 没有与本任务冲突的用户改动（当前 `schemas/` 下有 `__init__.py`、`project_profile.py`、`repository_summary.py`、`system_map.py`）；
-- 工作区干净（`git status --short` 无输出），否则先确认变更来源。
-
-**需要确认的一个问题**：当前依赖里**没有 `PyYAML`**。若要用 YAML 解析来验证模板，需要新增依赖；若不希望新增依赖，可在验证脚本里用纯文本方式提取键名后比对。建议默认后者，保持依赖最小。
+- `.venv/bin/python -c "import yaml"` 仍为 `ModuleNotFoundError`（确认当前无 YAML 能力）；
+- `templates/project-profile.yaml` 存在且与本日志描述一致；
+- `artifacts/` 目前只有 `.gitkeep`；
+- 工作区干净（`git status --short` 无输出）。
 
 ### 8.4 预计修改
 
-- 新建 `templates/project-profile.yaml`
-- 可选：删除 `templates/.gitkeep`（目录已有真实文件后不再需要；保留也无害），并在日志记录选择
-- 不修改 `schemas/` 下任何文件（除非采纳 8.1 的方案 B，并重跑 T003 回归）
+- 新建 `run_discovery.py`（项目根目录）
+- 视 Q004 结论决定是否修改 `.gitignore`（追加 `artifacts/`）
+- 不修改 `schemas/`、`core/`、`templates/`
 
 ### 8.5 实现要求
 
-- 模板键名与 `ProjectProfile` 字段逐一同名：`project_name`、`repository_path`、`startup`（`backend` / `frontend` / `base_url`）、`business_rules`（`id` / `rule`）；
-- 不写入模型未支持的键，否则 `extra="forbid"` 会直接报错；
-- 示例值必须与登录注册 Demo 相关，`business_rules` 使用 `R-REG-xxx` 风格，便于 T012 与代码事实对照；
-- `startup` 中的命令只作为文本示例；不得在注释或文档中引导执行未经确认的命令（见 D004）；
-- 不写入密码、Token、Cookie 等敏感值；
-- 模板要说明「除 `project_name`、`repository_path` 外均可留空」这一事实。
+- 命令行解析只用标准库 `argparse`，**不引入** `typer` / `click` 等新依赖；
+- 参数至少包括：`--repo`（被测仓库路径）、`--profile`（可选，指向 `project-profile.yaml`）；
+- 先校验 `--repo` 是否真实存在：不存在时以**环境问题**报错并非零退出（见 D005、R003），不要当成数据错误；
+- 创建 `artifacts/task_<id>/` 目录，并在其中写出当前能产出的最小产物；产物内容必须如实说明“尚未扫描，数据为空”，不得伪造扫描结果；
+- **不得执行** `project-profile.yaml` 中的任何启动命令（见 D004）；
+- 输出信息不得包含密码、Token、Cookie 等敏感内容；
+- 本轮不实现 YAML 解析（除非 Q005 另有决定）。
 
 ### 8.6 验收标准
 
-- `templates/project-profile.yaml` 存在，键名可人工逐项对照 `ProjectProfile`；
-- 模板中出现的键集合与 `ProjectProfile` 支持的键集合**完全一致**（不多、不少）；验证脚本用纯文本方式提取键名后与模型字段比对；
-- 用模板中的示例值手工构造 `ProjectProfile` 能通过校验（当前阶段直接构造模型，不解析 YAML）；
-- 原有 `schemas/` 代码无改动、无 Pylance 报错（若采纳方案 B，需重跑 T003 的 10 项回归）；
-- 提交后 `git status --short` 干净。
+- `run_discovery.py --help` 可正常显示参数说明；
+- 用一个真实存在的临时目录作为 `--repo`，能成功生成 `artifacts/task_<id>/` 并退出码为 0；
+- 用一个不存在的路径作为 `--repo`，得到明确的“环境问题”提示且退出码非 0；
+- 重复运行两次不会互相覆盖或报错（需明确并记录任务目录的编号策略）；
+- 全过程未执行任何 YAML 或启动命令；
+- 上述验证由 `.venv/bin/python` 实际执行并全部通过；`schemas/` 无 Pylance 报错；提交后工作区干净。
 
 ### 8.7 本任务不要做
 
-- 不实现 YAML 读取、仓库扫描、Flask / React 分析、调用链匹配、项目启动；
-- 不建立 `run_discovery.py`（属于 T007）；
+- 不实现仓库扫描、技术栈识别、Flask / React 分析、调用链构建（属于 T008～T011）；
+- 不实现 YAML 读取与合并（属于 T012，除非 Q005 另有决定）；
 - 不安装 `pytest`、`PyYAML` 或其他新依赖；不建立 `tests/` 目录；
-- 只允许新增 `templates/project-profile.yaml`（可含删除 `templates/.gitkeep`），不修改 `core/`、`artifacts/` 与 `schemas/`。
+- 不修改 `schemas/`、`core/`、`templates/`；
+- 不开始 T008。
 
 ### 8.8 建议验证命令
 
@@ -763,11 +805,17 @@ cd "/Users/hongweiyuan/Desktop/项目/QA_ai_agent"
 # 1) 环境正确
 .venv/bin/python -c "import sys, pydantic; print(sys.version.split()[0], pydantic.VERSION)"
 
-# 2) 回归：三个 schema 模块仍可导入
-.venv/bin/python -c "from schemas import ProjectProfile, RepositorySummary, SystemMap; print('ok')"
+# 2) 帮助信息
+.venv/bin/python run_discovery.py --help
 
-# 3) 模板验证（一次性 heredoc；不落盘、不新增依赖）：
-#    用文本方式提取 YAML 键名，与 ProjectProfile.model_fields 比对
+# 3) 正常路径：用存在的目录当 --repo
+.venv/bin/python run_discovery.py --repo templates
+
+# 4) 错误路径：不存在的仓库，应报“环境问题”且退出码非 0
+.venv/bin/python run_discovery.py --repo /definitely/not/exist; echo "exit=$?"
+
+# 5) 回归：三个 schema 模块仍可导入
+.venv/bin/python -c "from schemas import ProjectProfile, RepositorySummary, SystemMap; print('ok')"
 ```
 
 ---
@@ -890,7 +938,123 @@ T002 已确认当前目录**不是** Git 仓库。因此 `.gitignore` 和两个 
 
 ---
 
+### Q005：YAML 解析（PyYAML）什么时候引入？
+
+状态：open
+
+关联任务：T006、T007、T012
+
+**为什么需要决定**
+
+T006 已交付 `templates/project-profile.yaml`，但项目环境**没有 YAML 解析器**（T006 已实测 `import yaml` 失败）。T007 要做命令行入口，其中 `--profile` 参数是“只接收并校验文件存在”，还是“直接解析内容并构造 `ProjectProfile`”，会直接改变 T007 的实现范围。
+
+**方案 A**：在 T007 引入 `PyYAML`，入口即可校验档案文件。
+影响：能提前暴露档案格式错误；代价是多一个依赖，且 T007 范围变大。
+
+**方案 B**（建议）：T007 只用标准库，`--profile` 仅检查文件存在；YAML 解析留到 T012 与“合并声明信息”一起做。
+影响：依赖最小、职责单一；代价是入口参数会先“拿着不用”一段时间，必须在帮助信息里写清楚。
+
+**建议**
+
+方案 B。另外建议在 T012 引入 `PyYAML` 时，同步把它写进 `requirements.txt` 并刷新 `requirements.lock`（见 D008）。
+
+**暂不决定的影响**
+
+不阻塞 T007 开工（可先按方案 B 实现），但必须在 T007 开始前确认。
+
+**最终答复**：未答复
+
+---
+
 ## 10. 历史任务记录
+
+### T006：创建 project-profile.yaml 模板
+
+状态：completed
+
+开始时间：2026-09-14（会话内，精确时刻未记录）
+
+完成时间：2026-09-14 05:31 UTC（日志记录时刻）
+
+执行者：GitHub Copilot
+
+关联决定：D003、D004、D011
+
+**目标**
+
+在 `templates/` 下交付一份人工可填的 `project-profile.yaml` 模板，键名与当前 `ProjectProfile` / `StartupInfo` / `BusinessRule` 完全一致，附中文注释与最小示例值。本轮不实现 YAML 读取，也不改动 `ProjectProfile` 字段。
+
+**实际修改**
+
+| 文件 | 动作 | 修改内容 |
+|---|---|---|
+| `templates/project-profile.yaml` | 新增 | 项目档案模板（中文注释 + 一份可用的示例档案） |
+| `logs/logs/TASK_LOG_1.md` | 修改 | 本轮日志更新 |
+| `logs/week-1-code-understanding-plan.md` | 修改 | Day 1 清单第 6 项勾选完成 |
+
+未改动：`schemas/`、`core/`、`artifacts/`、`requirements.txt`、`requirements.lock`；未安装任何新依赖；`templates/.gitkeep` 保留未删（目录已有真实文件，保留无害且不引入无关改动）。
+
+**实现结果**
+
+- 模板顶层键：`project_name`、`repository_path`、`startup`、`business_rules`，与 `ProjectProfile.model_fields` 完全一致；
+- `startup` 子键：`backend`、`frontend`、`base_url`，与 `StartupInfo.model_fields` 完全一致；
+- `business_rules` 子键：`id`、`rule`，与 `BusinessRule.model_fields` 完全一致；
+- 示例值：`login-register-demo` / `/absolute/path/to/login-register-demo` / `http://localhost:3000`，以及三条规则 `R-REG-001 用户名不能为空`、`R-REG-002 用户名长度不得少于 6 位`、`R-REG-003 密码长度不得少于 6 位`；
+- 注释说明：哪两个字段必填、哪些可省略、省略时请整行删除而**不要留空值**、`startup` 命令只保存不执行、不要写敏感信息、以及扩展字段（`business_description` 等）尚未支持；
+- 示例值均为非空、非个人路径；`base_url` 为合法 http 地址。
+
+与原计划存在的差异：无。用户选定的方案（模板只含现有字段、不装 PyYAML、不实现读取）全部遵守，记为 D011。
+
+**验证证据**
+
+验证方式：`.venv/bin/python` 执行一次性 heredoc 脚本（未落盘，`tests/` 未建立，未新增依赖）。
+
+| 验证组 | 覆盖内容 | 结果 |
+|---|---|---|
+| 1 | `ProjectProfile` / `StartupInfo` / `BusinessRule` 可导入 | PASS |
+| 2–4 | 输出三个模型的 `model_fields`，与模板顶层键、`startup` 子键、`business_rules` 子键逐项比对，**完全一致** | PASS |
+| 5 | 用模板同组示例值手工构造 `ProjectProfile` 成功 | PASS |
+| 5b | 脚本中的示例值与模板文件内容一致（防止两者脱节） | PASS |
+| 6–7 | `model_dump()`、`model_dump_json()` 正常 | PASS |
+| 8 | 示例 `base_url` 通过校验（归一化为 `http://localhost:3000/`）；`ftp://` 仍被拒 | PASS |
+| 9 | 模板不含 `business_description` / `test_scope` / `test_accounts` / `reset` / `risk_focus`；所有键都在模型允许集合内 | PASS |
+| 10 | 无线索密码 / Token / Cookie / 私钥字段，无 `/Users/` 个人路径 | PASS |
+| 11 | `RepositorySummary`、`SystemMap` 仍可导入与使用 | PASS |
+| 12 | YAML 形式检查：无 Tab、缩进为 2 的倍数、键值形式合法、无空值、引号成对、无重复顶层键 | PASS |
+| 13 | 省略 `startup` / `business_rules` 时得到安全默认值；纯空格 `rule` 仍被拒 | PASS |
+| 14 | 确认当前环境**未**安装 YAML 解析器（`import yaml` 失败） | PASS |
+
+关键输出摘要：
+
+```text
+ProjectProfile.model_fields : ['business_rules', 'project_name', 'repository_path', 'startup']
+StartupInfo.model_fields    : ['backend', 'base_url', 'frontend']
+BusinessRule.model_fields   : ['id', 'rule']
+模板顶层键                  : ['project_name', 'repository_path', 'startup', 'business_rules']
+通过 17 / 17
+```
+
+**关于验证范围的准确表述**
+
+> 本轮验证了模板字段与 Pydantic 模型一致，但由于尚未引入 YAML 解析器，没有执行“读取 YAML → 创建 `ProjectProfile`”的端到端验证。第 12 项只是缩进/列表/注释的**文本形式检查**，不是 YAML 解析；也未临时编写不完整的解析器来冒充解析验证。
+
+**遇到的问题与处理**
+
+问题：无。开工前 `git status` 干净，工作区无无关改动，一次执行全部通过。
+
+**未完成或未覆盖**
+
+- **YAML 读取仍未实现**（L001）：模板目前只能人工拄写，程序读不进来；
+- 模板未经过真实 YAML 解析器校验，T012 引入 `PyYAML` 时需重新验证一次语法；
+- 未在真实登录注册 Demo 上试用模板（还没有扫描器）；
+- 仍未建立可重复执行的回归测试（Q001，R005）。
+
+**给下一任务的影响**
+
+- T007 开工前必须先定 **Q004**（`artifacts/` 是否入库）与 **Q005**（何时引入 `PyYAML`），否则首轮产物可能直接进入提交、或入口实现范围不一致；
+- 模板的键名已锁定，若 T007/T012 需要新字段，必须新开任务扩展模型，并同步刷新模板（D011）。
+
+---
 
 ### T002-B：配置 GitHub 远程仓库并首次推送
 
