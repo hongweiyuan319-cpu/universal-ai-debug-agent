@@ -4,7 +4,7 @@
 
 维护原则：顶部“当前快照”随进度更新；底部“历史任务记录”只追加、不覆盖。不要粘贴完整聊天、完整源代码或冗长终端输出。
 
-最后更新：2026-09-14 03:59 UTC
+最后更新：2026-09-14 05:02 UTC
 
 日志维护者：GitHub Copilot
 
@@ -60,16 +60,18 @@
 已经可以做到：
 
 - 用 Python 3.12 + Pydantic v2 定义并校验“项目档案”的数据格式（`ProjectProfile` / `StartupInfo` / `BusinessRule`）；
-- 用 Pydantic v2 定义并校验“仓库扫描结果”的数据格式（`RepositorySummary` / `Finding` / `SourceType`），每一条结论都强制携带来源类型、来源文件、定位与 0～1 置信度；
-- 拒绝空字符串、纯空格字符串、拼错的字段名、非 http/https 的 `base_url`、越界置信度、非法的来源类型；
+- 定义并校验“仓库扫描结果”的数据格式（`RepositorySummary` / `Finding` / `SourceType`）；
+- 定义并校验“系统地图”的数据格式（`SystemMap` / `FrontendPage` / `FrontendRequest` / `BackendRoute` / `DataModel` / `CallChain` 及 3 个枚举），并检查同类对象 ID 是否重复、调用链引用是否真实存在；
+- 所有“结论型”数据强制携带来源类型、来源文件、定位与 0～1 置信度；
+- 拒绝空字符串、纯空格字符串、拼错的字段名、非 http/https 的 `base_url`、越界置信度、非法的来源类型、非法 HTTP 方法、无效状态码；
 - 把模型安全地转换为 Python 字典与 JSON，并导出 JSON Schema。
 
-尚不能做到：
+尚不能做到（**定义了数据格式 ≠ 系统已经能生成它**）：
 
 - 读取 `project-profile.yaml`（YAML 解析未实现）；
 - 扫描仓库、识别技术栈与入口文件（只有数据契约，没有扫描逻辑）；
-- 识别 Flask 路由、React 页面、表单字段、调用链；
-- 生成 `system_map.json`；
+- 识别 Flask 路由、React 页面、表单字段、调用链（属于 T009～T011）；
+- **自动生成 `system_map.json`**：`SystemMap` 目前只能手工构造，没有任何代码去填充它；
 - 通过命令行一条命令跑完整个发现流程。
 
 ---
@@ -78,13 +80,13 @@
 
 | 项目 | 当前值 |
 |---|---|
-| 当前任务 | T002-A：Git 版本控制与依赖锁定（Q002 / Q003 落实） |
+| 当前任务 | T005：定义 SystemMap 数据模型 |
 | 当前状态 | completed |
-| 上一个完成任务 | T004：定义 RepositorySummary 数据模型 |
-| 下一任务 | T005：定义 SystemMap 数据模型 |
-| 当前里程碑完成度 | Day 1 清单 3/6 项；Week 1 共 7 天，处于 Day 1 |
+| 上一个完成任务 | T002-A：Git 版本控制与依赖锁定（Q002 / Q003 落实） |
+| 下一任务 | T006：创建 project-profile.yaml 模板 |
+| 当前里程碑完成度 | Day 1 清单 4/6 项；Week 1 共 7 天，处于 Day 1 |
 | 阻塞项 | 无 |
-| 最后一次成功验证 | 2026-09-14 03:59 UTC；依赖锁定（lock 与 `pip freeze` 完全一致、离线解析通过）与 Git 初始化（13 个文件入库、忽略规则命中） |
+| 最后一次成功验证 | 2026-09-14 05:02 UTC；SystemMap 模型验证（49/49 PASS，含 ID 唯一性与引用存在性检查） |
 | 日志维护者 | GitHub Copilot |
 
 ### 状态定义
@@ -109,7 +111,7 @@
 | T002-A | 落实 Q002 / Q003：Git 版本控制与依赖锁定 | completed | `git init -b main` 成功；`requirements.lock` 与 `pip freeze` 完全一致 | T002、T004 |
 | T003 | 实现 ProjectProfile 数据模型 | completed | 三个模型通过 10 项最小验证 | T002 |
 | T004 | 定义 RepositorySummary 数据模型 | completed | 技术栈/依赖/入口文件可通过 Pydantic 校验，每条结论带来源与置信度（26/26 PASS） | T003 |
-| T005 | 定义 SystemMap 数据模型 | planned | 页面/API/路由/调用链可通过 Pydantic 校验 | T004 |
+| T005 | 定义 SystemMap 数据模型 | completed | 页面/API/路由/数据模型/调用链可通过 Pydantic 校验，并检查重复 ID 与悬空引用（49/49 PASS） | T004 |
 | T006 | 创建 project-profile.yaml 模板 | planned | 模板字段与 `ProjectProfile` 完全一致 | T003 |
 | T007 | 建立 run_discovery.py 命令行入口 | planned | 一条命令生成 `artifacts/task_<id>/` 目录 | T006 |
 | T008 | 仓库扫描与技术栈识别（Day 2） | planned | 输出 `repository_summary.json` | T007 |
@@ -135,7 +137,7 @@ Day 1 清单进度：
 - [x] 建立 `core/`、`schemas/`、`templates/`、`artifacts/`；
 - [x] 定义 `ProjectProfile`：项目名、仓库路径、启动信息、业务规则；
 - [x] 定义 `RepositorySummary`：语言、框架、依赖、入口文件；
-- [ ] 定义 `SystemMap`：页面、API、后端路由、数据模型、调用链；
+- [x] 定义 `SystemMap`：页面、API、后端路由、数据模型、调用链；
 - [ ] 建立 `run_discovery.py` 命令行入口；
 - [ ] 创建 `project-profile.yaml` 模板。
 
@@ -147,10 +149,11 @@ Day 1 清单进度：
 |---|---|---|---|
 | `core/` | 核心分析模块包（当前只有 docstring，无实现） | 已实现（占位） | T001 |
 | `core/__init__.py` | 声明规划中的 5 个分析器子模块 | 已实现（占位） | T001 |
-| `schemas/` | 跨模块共享的数据契约包 | 已实现 | T004 |
-| `schemas/__init__.py` | 导出 6 个公开模型（含 `Finding`、`RepositorySummary`、`SourceType`） | 已验证 | T004 |
-| `schemas/project_profile.py` | 三个 Pydantic v2 数据模型 | 已验证 | T003 |
-| `schemas/repository_summary.py` | `Finding`、`SourceType`、`RepositorySummary` 三个模型 | 已验证 | T004 |
+| `schemas/` | 跨模块共享的数据契约包 | 已实现 | T005 |
+| `schemas/__init__.py` | 导出 15 个公开模型（新增 9 个 SystemMap 相关名字） | 已验证 | T005 |
+| `schemas/project_profile.py` | `BusinessRule`、`StartupInfo`、`ProjectProfile` | 已验证 | T003 |
+| `schemas/repository_summary.py` | `Finding`、`SourceType`、`RepositorySummary` | 已验证 | T004 |
+| `schemas/system_map.py` | `FrontendPage`、`FrontendRequest`、`BackendRoute`、`DataModel`、`CallChain`、`SystemMap` 及 `HttpMethod`、`CallChainStatus`、`DataModelKind` | 已验证 | T005 |
 | `templates/` | 配置模板目录（当前为空，仅 `.gitkeep`） | 未开始 | T001 |
 | `artifacts/` | 运行期产物目录（当前为空，仅 `.gitkeep`） | 未开始 | T001 |
 | `requirements.txt` | 运行依赖声明（`pydantic>=2,<3`），注释说明锁文件用法 | 已验证 | T002-A |
@@ -160,7 +163,7 @@ Day 1 清单进度：
 | `logs/universal-ai-debug-agent-design.md` | 总体设计文档（V1 范围、架构、目录规划） | 已实现 | 无 |
 | `logs/week-1-code-understanding-plan.md` | 第 1 周任务清单（Day 1～Day 7） | 已实现 | 无 |
 | `logs/logs/TASK_LOG_template.md` | 本日志的模板与维护规则 | 已实现 | 无 |
-| `logs/logs/TASK_LOG_1.md` | 本文件 | 已实现 | T004 |
+| `logs/logs/TASK_LOG_1.md` | 本文件 | 已实现 | T005 |
 
 尚未建立（属于 V1 后期，本阶段不需要）：`app/`、`executors/`、`projects/`。
 
@@ -228,7 +231,7 @@ python3.12 -m venv .venv
 
 ```bash
 # 正式测试套件尚未建立（未安装 pytest）。当前可用的最小冒烟检查：
-.venv/bin/python -c "from schemas import BusinessRule, Finding, ProjectProfile, RepositorySummary, SourceType, StartupInfo; print('ok')"
+.venv/bin/python -c "from schemas import ProjectProfile, RepositorySummary, SystemMap; print('ok')"
 
 # 锁文件是否与当前环境完全一致（无输出即一致）
 diff <(.venv/bin/python -m pip freeze) requirements.lock
@@ -561,6 +564,49 @@ T002 确认目录不是 Git 仓库，因此 `.gitignore` 与两个 `.gitkeep` �
 
 ---
 
+### D009：`SystemMap` 用 ID 引用连接对象，并强制检查唯一性与悬空引用
+
+状态：accepted
+
+日期：2026-09-14
+
+关联任务：T005（继承 D006）
+
+**背景**
+
+系统地图需要表达“页面 → API → 后端路由 → 数据模型”。假如每个对象内嵌被引用对象的整份内容，同一实体就会出现多份副本，改一处就会产生互相矛盾的数据；反之，如果只存 ID 却不检查，调用链就可能指向一个根本不存在的对象，报告里会出现“看起来已经确认、实际无源头”的链路。
+
+**决定**
+
+1. 五类对象（页面、请求、后端路由、数据模型、调用链）各有一个非空 `id`，对象之间**只用 ID 引用**，不整份复制；
+2. `SystemMap` 在构造时统一检查：同类对象内 ID 不重复；调用链的 `page_id` / `api_id` / `backend_route_id` / `data_model_ids` 以及后端路由的 `related_data_model_ids`，被引用对象必须真实存在；
+3. 调用链状态与引用完整度必须自洽：`complete` 必须齐“页面 + 请求 + 后端路由”三段；`partial` / `unresolved` 至少引用一个已确认对象；
+4. 证据与置信度**直接复用 T004 的 `Finding`**，`system_map.py` 不新建 Evidence / SourceType / Confidence；每个对象至少一条证据（`min_length=1`）；
+5. HTTP 方法用 `HttpMethod` 枚举（GET / POST / PUT / PATCH / DELETE），写入时统一转大写；
+6. 数据模型类型用 `DataModelKind` 枚举，并保留 `other` 兜底。
+
+**原因**
+
+报告要用来判定 Bug，任何“看起来成立的链路”都必须能追溯到真实代码。用 ID 引用 + 强制校验，能让不完整的知识要么被标为 `partial` / `unresolved`，要么直接报错，而不是默默地编造出一段关系。
+
+**影响**
+
+- 正面：同一实体只有一份数据；链路状态和引用完整度无法“装出来”；T009～T011 的分析器只需生成 ID 引用，不必拼装嵌套对象。
+- 代价：分析器必须先建立稳定的 ID 命名约定（见 R007），构造数据比写裸字典繁琐。
+- 后续约束：T009～T011 不得绕过 `SystemMap` 自行拼接引用；未确认的关系留空，不要编造 ID 来“凑完整”。
+
+**考虑过的替代方案**
+
+- 内嵌整份被引用对象：副本会漂移、改名后出现矛盾，未选择。
+- 只存 ID 但不做引用检查：悬空引用会变成“假结论”，与本项目的核心目标直接冲突，未选择。
+- 在 `system_map.py` 里再定义一套证据模型：与 D006 “统一复用 `Finding`”矛盾，未选择。
+
+**替代关系**
+
+落实 R004 的剩余部分（`RepositorySummary` 与 `SystemMap` 现在都要求证据）。
+
+---
+
 ## 7. 已知限制、风险与阻塞
 
 ### 7.1 已知限制
@@ -568,11 +614,11 @@ T002 确认目录不是 Git 仓库，因此 `.gitignore` 与两个 `.gitkeep` �
 | ID | 限制 | 影响 | 计划处理阶段 |
 |---|---|---|---|
 | L001 | 不能读取 `project-profile.yaml`，只能手工构造 `ProjectProfile` | 无法从配置文件驱动流程 | T006 |
-| L002 | 未实现仓库扫描与代码分析 | 无法产出 `repository_summary.json` 与 `system_map.json` | T008～T011 |
+| L002 | 未实现仓库扫描与代码分析（`RepositorySummary` / `SystemMap` 仅有数据契约，无任何代码填充） | 无法产出 `repository_summary.json` 与 `system_map.json` | T008～T011 |
 | L003 | 没有正式测试套件（未安装 pytest） | 回归依赖一次性脚本，历史验证无法复现 | 见 Q001 |
 | L004 | ~~项目未纳入 Git 版本控制~~ **已解决（T002-A）** | 已可回溯变更历史，忽略规则生效 | 已完成 |
 | L005 | 没有命令行入口 | 只能通过交互式 Python 调用 | T007 |
-| L006 | 缺少 `SystemMap` 模型；`RepositorySummary` 已有契约但尚无任何代码填充它 | 系统地图尚无数据结构可承载 | T005 / T008 |
+| L006 | ~~缺少 `SystemMap` 模型~~ **已解决（T005）** | 数据契约已就位 | 已完成 |
 | L007 | ~~依赖未锁定精确版本~~ **已解决（T002-A）** | 已可用 `requirements.lock` 复现 5 个包的精确版本 | 已完成 |
 
 ### 7.2 风险
@@ -582,9 +628,10 @@ T002 确认目录不是 Git 仓库，因此 `.gitignore` 与两个 `.gitkeep` �
 | R001 | `pydantic>=2,<3` 范围内的小版本升级改变校验行为（例如 URL 归一化、`extra` 报错结构） | 中 | 低 | **锁文件已建立（T002-A）**；升级依赖时重跑全部验证并刷新 `requirements.lock` |
 | R002 | 依赖用户级 pip 镜像源配置，换机器或换 CI 时拉取结果不一致 | 低 | 低 | 已记录镜像源（5.5）；**锁文件进一步降低影响（T002-A）**；CI 中仍需显式指定 `--index-url` |
 | R003 | 模型层不校验路径存在性，若调用方忘记检查，会把“路径写错”当成“仓库为空” | 中 | 中 | T008 必须显式映射为环境问题并补验证（见 D005） |
-| R004 | `declared`（表格声明）/ `observed`（代码事实）/ `inferred`（模型推断）三类来源尚未落到模型 | 中 | 高 | **T004 已部分缓解**：`SourceType` 与 `Finding` 已把三类来源、来源文件、定位与置信度固化为必填字段（见 D006）；剩下 `SystemMap` 需在 T005 沿用同一模式 |
-| R005 | 缺乏回归测试，后续改动可能悄悄破坏已通过的校验（T003 的 10 项、T004 的 26 项） | 高 | 中 | 见 Q001，尽快建立可重复执行的验证 |
+| R004 | ~~`declared`（表格声明）/ `observed`（代码事实）/ `inferred`（模型推断）三类来源尚未落到模型~~ **已解决（T004 + T005）** | 低 | 高 | `SourceType` + `Finding` 已把来源类型、来源文件、定位、置信度固化为必填（D006）；`SystemMap` 五类对象均要求至少一条证据（D009）。剩余风险转移到“分析器写错来源”，由 T009～T011 自行举证 |
+| R005 | 缺乏回归测试，后续改动可能悄悄破坏已通过的校验（T003 的 10 项、T004 的 26 项、T005 的 49 项） | 高 | 中 | 见 Q001，尽快建立可重复执行的验证 |
 | R006 | `Finding` 强制要求 `line` 或 `snippet`，若 T008 遇到确实无法定位的结论，可能被迫编造位置 | 中 | 中 | 允许用 `snippet` 承载原文；若 T008 反复受阻，再讨论放宽为“至少一项来源定位”并记录决定 |
+| R007 | `SystemMap` 的 ID 引用体系需要稳定的命名约定；若 T009～T011 各自随手生成 ID，可能出现同义不同名、或把链路指向错误对象 | 中 | 中 | 在 T009 开工前先确定并记录 ID 命名约定（例如 `page-xxx` / `req-xxx` / `route-xxx` / `model-xxx` / `chain-xxx`），并由 T011 生成 `SystemMap` 时统一校验 |
 
 ### 7.3 当前阻塞
 
@@ -596,60 +643,66 @@ T002 确认目录不是 Git 仓库，因此 `.gitignore` 与两个 `.gitkeep` �
 
 ### 8.1 下一任务
 
-任务编号：T005
+任务编号：T006
 
-任务名称：定义 SystemMap 数据模型
+任务名称：创建 project-profile.yaml 模板
 
 当前状态：planned
 
-目标：新增 `schemas/system_map.py`，用于描述“系统地图”——前端页面、前端请求/API、后端路由、数据模型与“页面 → API → 后端路由”调用链，并让每一项发现都能携带来源定位与置信度，为 T009～T011 的分析器提供数据契约。
+目标：在 `templates/` 下交付一份人工可填的 `project-profile.yaml` 模板，键名与 `ProjectProfile` 的校验规则一一对应，并附最小示例值（以登录注册 Demo 为例）。
+
+**开工前必须先解决的范围冲突**：设计文档 2.2 的示例包含 `business_description`、`test_scope`、`test_accounts`、`reset`、`risk_focus`，而当前 `ProjectProfile` 只支持 `project_name`、`repository_path`、`startup`、`business_rules`，且开启了 `extra="forbid"` —— 模板写上述字段会被模型直接拒绝。两种处理方式：
+
+- 方案 A（建议）：模板只包含模型当前支持的字段，保持 T006 单一职责；待 T012 真需要时再扩展 `ProjectProfile`；
+- 方案 B：在 T006 内同步扩展 `ProjectProfile`，会改动 T003 已验证代码，必须重跑 T003 回归。
 
 ### 8.2 开始前必须阅读
 
-- `logs/week-1-code-understanding-plan.md`（Day 1 第 4 项、Day 3～5 产出要求）
-- `logs/universal-ai-debug-agent-design.md`（4.1 代码理解器、10 最终交付输出、11 成功标准）
-- `schemas/repository_summary.py`（**直接复用** `Finding` 与 `SourceType`，不要重写一套）
-- 决定 D002、D003、D005、D006
+- `logs/universal-ai-debug-agent-design.md`（2.2 固定格式选填表、2.3 表格设计原则）
+- `logs/week-1-code-understanding-plan.md`（Day 1 第 6 项、Day 6 选填表要求）
+- `schemas/project_profile.py`（模板键名必须与它一一对应）
+- 决定 D002、D003、D004、D005
 
 ### 8.3 开始前必须检查
 
 - 当前工作目录为 `/Users/hongweiyuan/Desktop/项目/QA_ai_agent`；
 - `.venv/bin/python -V` 输出 `Python 3.12.13`；
 - `.venv/bin/python -c "import pydantic; print(pydantic.VERSION)"` 输出 `2.13.5`；
-- `schemas/repository_summary.py` 的实际内容与本日志描述一致；
-- 没有与本任务冲突的用户改动（当前 `schemas/` 下只有 `__init__.py`、`project_profile.py`、`repository_summary.py`）。
+- `schemas/project_profile.py` 的实际内容与本日志描述一致；
+- 没有与本任务冲突的用户改动（当前 `schemas/` 下有 `__init__.py`、`project_profile.py`、`repository_summary.py`、`system_map.py`）；
+- 工作区干净（`git status --short` 无输出），否则先确认变更来源。
+
+**需要确认的一个问题**：当前依赖里**没有 `PyYAML`**。若要用 YAML 解析来验证模板，需要新增依赖；若不希望新增依赖，可在验证脚本里用纯文本方式提取键名后比对。建议默认后者，保持依赖最小。
 
 ### 8.4 预计修改
 
-- 新建 `schemas/system_map.py`
-- 修改 `schemas/__init__.py`（追加导出）
+- 新建 `templates/project-profile.yaml`
+- 可选：删除 `templates/.gitkeep`（目录已有真实文件后不再需要；保留也无害），并在日志记录选择
+- 不修改 `schemas/` 下任何文件（除非采纳 8.1 的方案 B，并重跑 T003 回归）
 
 ### 8.5 实现要求
 
-- 使用 Pydantic v2 写法（`model_config = ConfigDict(...)` + `@field_validator` / `@model_validator`），不得混入 v1 的 `@validator` 或旧式 `class Config`；
-- 沿用 D003 的 `extra="forbid"` 与 `str_strip_whitespace=True`；
-- 复用 `RepositorySummary` 模块里的 `Finding` / `SourceType`（见 D006），不要另建重复字段；
-- 至少覆盖：前端页面、前端请求、后端路由、数据模型、调用链；页面与请求之间要能表达“已确认匹配 / 疑似匹配”与“未匹配待人工补充”；
-- 列表型可选字段用 `default_factory=list`，不得留 `None`；
-- 空字符串 / 纯空格字符串必须被拒绝；
-- 本轮只定义模型，不实现任何解析、扫描或匹配逻辑。
+- 模板键名与 `ProjectProfile` 字段逐一同名：`project_name`、`repository_path`、`startup`（`backend` / `frontend` / `base_url`）、`business_rules`（`id` / `rule`）；
+- 不写入模型未支持的键，否则 `extra="forbid"` 会直接报错；
+- 示例值必须与登录注册 Demo 相关，`business_rules` 使用 `R-REG-xxx` 风格，便于 T012 与代码事实对照；
+- `startup` 中的命令只作为文本示例；不得在注释或文档中引导执行未经确认的命令（见 D004）；
+- 不写入密码、Token、Cookie 等敏感值；
+- 模板要说明「除 `project_name`、`repository_path` 外均可留空」这一事实。
 
 ### 8.6 验收标准
 
-- 新增模型可从 `schemas` 包成功导入，且原模型（`ProjectProfile`、`RepositorySummary`）导入与使用不受影响；
-- 用一份完整数据（至少两条“页面 → API → 后端路由”链路）可成功创建 `SystemMap`；
-- 省略可选列表时得到空列表而不是 `None`；
-- 必填字符串为或纯空格时校验失败；拼错字段名触发 `extra_forbidden`；来源类型与置信度校验同 T004；
-- `model_dump()` 与 `model_dump_json()` 均可正常执行；
-- 上述验证全部由 `.venv/bin/python` 实际执行并全部通过；
-- `schemas/` 下所有文件无 Pylance 报错。
+- `templates/project-profile.yaml` 存在，键名可人工逐项对照 `ProjectProfile`；
+- 模板中出现的键集合与 `ProjectProfile` 支持的键集合**完全一致**（不多、不少）；验证脚本用纯文本方式提取键名后与模型字段比对；
+- 用模板中的示例值手工构造 `ProjectProfile` 能通过校验（当前阶段直接构造模型，不解析 YAML）；
+- 原有 `schemas/` 代码无改动、无 Pylance 报错（若采纳方案 B，需重跑 T003 的 10 项回归）；
+- 提交后 `git status --short` 干净。
 
 ### 8.7 本任务不要做
 
 - 不实现 YAML 读取、仓库扫描、Flask / React 分析、调用链匹配、项目启动；
 - 不建立 `run_discovery.py`（属于 T007）；
-- 不安装 `pytest` 或其他新依赖；不建立 `tests/` 目录；
-- 不修改 `core/`、`templates/`、`artifacts/`。
+- 不安装 `pytest`、`PyYAML` 或其他新依赖；不建立 `tests/` 目录；
+- 只允许新增 `templates/project-profile.yaml`（可含删除 `templates/.gitkeep`），不修改 `core/`、`artifacts/` 与 `schemas/`。
 
 ### 8.8 建议验证命令
 
@@ -659,10 +712,11 @@ cd "/Users/hongweiyuan/Desktop/项目/QA_ai_agent"
 # 1) 环境正确
 .venv/bin/python -c "import sys, pydantic; print(sys.version.split()[0], pydantic.VERSION)"
 
-# 2) 导入正确（含回归：旧模型仍可用）
+# 2) 回归：三个 schema 模块仍可导入
 .venv/bin/python -c "from schemas import ProjectProfile, RepositorySummary, SystemMap; print('ok')"
 
-# 3) 完整验证（沿用一次性 heredoc 方式；验证脚本不落盘）
+# 3) 模板验证（一次性 heredoc；不落盘、不新增依赖）：
+#    用文本方式提取 YAML 键名，与 ProjectProfile.model_fields 比对
 ```
 
 ---
@@ -786,6 +840,101 @@ T002 已确认当前目录**不是** Git 仓库。因此 `.gitignore` 和两个 
 ---
 
 ## 10. 历史任务记录
+
+### T005：定义 SystemMap 数据模型
+
+状态：completed
+
+开始时间：2026-09-14（会话内，精确时刻未记录）
+
+完成时间：2026-09-14 05:02 UTC（日志记录时刻）
+
+执行者：GitHub Copilot
+
+关联决定：D002、D003、D006、D009
+
+**目标**
+
+定义 `system_map.json` 对应的 Pydantic v2 数据模型：页面、API 请求、后端路由、数据模型、调用链，并通过 ID 引用把它们连起来，同时强制检查重复 ID 与悬空引用。本轮不扫描任何真实仓库，不实现 React / Flask 分析逻辑。
+
+**实际修改**
+
+| 文件 | 动作 | 修改内容 |
+|---|---|---|
+| `schemas/system_map.py` | 新增 | `HttpMethod`、`CallChainStatus`、`DataModelKind` 三个枚举；`FrontendPage`、`FrontendRequest`、`BackendRoute`、`DataModel`、`CallChain`、`SystemMap` 六个模型 |
+| `schemas/__init__.py` | 修改 | 追加导入与 `__all__`（15 个公开名字）；docstring 补充“对象间只用 ID 互相引用”的约定 |
+| `logs/logs/TASK_LOG_1.md` | 修改 | 本轮日志更新 |
+
+未改动：`core/`、`templates/`、`artifacts/`、`requirements.txt`、`requirements.lock`、`schemas/project_profile.py`、`schemas/repository_summary.py`（**未修改 T004 的任何代码**，`Finding` 原样复用）。
+
+**实现结果**
+
+- 五类对象（全部 `extra="forbid"` + `str_strip_whitespace=True`）：
+  - `FrontendPage`：`id` / `name` / `path` / `component_file`（可选）/ `form_fields` / `evidence`；
+  - `FrontendRequest`：`id` / `method` / `path` / `file_path` / `request_fields` / `evidence`（只表示“前端准备发什么”，不代表后端存在该路由）；
+  - `BackendRoute`：`id` / `method` / `path` / `handler_function` / `file_path` / `input_fields` / `output_fields` / `status_codes` / `related_data_model_ids` / `evidence`；
+  - `DataModel`：`id` / `name` / `kind` / `file_path` / `fields` / `evidence`；
+  - `CallChain`：`id` / `status` / `page_id` / `api_id` / `backend_route_id` / `data_model_ids` / `evidence`。
+- 证据复用 T004 的 `Finding`（**没有新建 Evidence / SourceType / Confidence**），每个对象 `evidence` 至少一条（`min_length=1`）。
+- 引用完整性：`SystemMap` 构造时检查同类对象 ID 不重复，并检查 `CallChain` 的 `page_id` / `api_id` / `backend_route_id` / `data_model_ids` 与 `BackendRoute.related_data_model_ids` 是否指向真实存在的对象。
+- 状态自洽：`complete` 必须齐“页面 + 请求 + 后端路由”；`partial` / `unresolved` 至少引用一个已确认对象（未确认的环节留空，不编造 ID）。
+- HTTP 方法统一转大写；`status_codes` 限制在 100～599；`DataModelKind` 保留 `other` 兜底。
+- 列表字段全部 `default_factory=list`，代码中无 `default=[]`；已用“两个实例互不影响”验证无共享状态问题。
+
+与原计划存在的差异：无。用户要求的 18 项验证全部覆盖并额外增加了边界用例，未做范围外扩展。
+
+**新增设计决定**
+
+D009：`SystemMap` 用 ID 引用连接对象，并强制检查唯一性与悬空引用；证据复用 T004 的 `Finding`。
+
+**验证证据**
+
+验证方式：`.venv/bin/python` 执行一次性 heredoc 脚本（未落盘，`tests/` 未建立）。
+
+| 验证组 | 覆盖内容 | 结果 |
+|---|---|---|
+| 导入与回归 | 新增 9 个名字可从 `schemas` 导入；`ProjectProfile` / `RepositorySummary` 仍可导入与使用 | PASS |
+| 完整地图 | 2 个页面 + 2 个请求 + 2 个后端路由 + 1 个 `User` 模型 + 2 条 `complete` 调用链 | PASS |
+| 默认值 | 7 个可选列表省略时均为 `[]`；两个 `SystemMap` 实例不共享列表 | PASS |
+| 字符串校验 | 8 项空字符串 / 纯空格用例（含可选 `component_file`、`page_id`）全部被拒 | PASS |
+| 多余字段 | 页面、调用链、`SystemMap` 拼错字段名均触发 `extra_forbidden` | PASS |
+| HTTP 方法 | `FETCH` / `GETS` / 数字被拒；`post` / `patch` / `delete` 自动转大写 | PASS |
+| 证据规则 | `inferred` + 1.0 被拒、`inferred` + 0.6 通过；无行号且无片段被拒；空证据列表被拒 | PASS |
+| 重复 ID | 页面、请求、路由、数据模型、调用链五类重复 ID 全部被拒 | PASS |
+| 悬空引用 | 不存在的 `page_id` / `api_id` / `backend_route_id` / 数据模型 ID、以及路由关联不存在模型，全部被拒 | PASS |
+| 链路状态 | `complete` 缺任一段被拒；`partial` / `unresolved` 可缺目标但至少引用一个；零引用被拒 | PASS |
+| 其他约束 | 状态码 9999 被拒；数据模型 `kind` 非法被拒 | PASS |
+| 序列化 | `model_dump()`、`model_dump_json()`、`model_json_schema()` 正常（含 5 个顶层字段） | PASS |
+
+关键输出摘要：
+
+```text
+python  : 3.12.13
+pydantic: 2.13.5
+完整地图: pages=2 requests=2 routes=2 models=1 chains=2
+通过 49 / 49
+```
+
+静态检查：Pylance 对 `schemas/` 下 4 个文件均无报错。
+
+**遇到的问题与处理**
+
+问题：无。一次执行全部通过（无失败重跑）。
+
+**未完成或未覆盖**
+
+- 没有任何代码去填充 `SystemMap`；`system_map.json` 目前只能手工构造（L002）；
+- 未在真实 React + Flask 仓库上验证模型的表达力（例如一个后端路由对应多个前端请求、同一页面多个入口文件），留给 T009～T011；
+- ID 命名约定尚未确定（R007），待 T009 开工前明确；
+- 仍未建立可重复执行的回归测试（Q001，R005）。
+
+**给下一任务的影响**
+
+- T006 只创建 YAML 模板，不涉及 `schemas/`；但开工前必须先解决设计文档字段与 `ProjectProfile` 支持范围不一致的问题（见 8.1）；
+- T006 的验收若要真正解析 YAML，会需要 `PyYAML`；建议先用纯文本比对键名，保持“不新增依赖”的约定；
+- 从 T009 起，分析器必须遵守 D009：只用 ID 引用、未确认就留空、每个对象带至少一条证据。
+
+---
 
 ### T002-A：Git 版本控制与依赖锁定（Q002 / Q003 落实）
 
