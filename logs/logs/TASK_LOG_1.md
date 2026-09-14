@@ -4,7 +4,7 @@
 
 维护原则：顶部“当前快照”随进度更新；底部“历史任务记录”只追加、不覆盖。不要粘贴完整聊天、完整源代码或冗长终端输出。
 
-最后更新：2026-09-14 05:02 UTC
+最后更新：2026-09-14 05:23 UTC
 
 日志维护者：GitHub Copilot
 
@@ -80,13 +80,13 @@
 
 | 项目 | 当前值 |
 |---|---|
-| 当前任务 | T005：定义 SystemMap 数据模型 |
+| 当前任务 | T002-B：配置 GitHub 远程仓库并首次推送 |
 | 当前状态 | completed |
-| 上一个完成任务 | T002-A：Git 版本控制与依赖锁定（Q002 / Q003 落实） |
+| 上一个完成任务 | T005：定义 SystemMap 数据模型 |
 | 下一任务 | T006：创建 project-profile.yaml 模板 |
 | 当前里程碑完成度 | Day 1 清单 4/6 项；Week 1 共 7 天，处于 Day 1 |
 | 阻塞项 | 无 |
-| 最后一次成功验证 | 2026-09-14 05:02 UTC；SystemMap 模型验证（49/49 PASS，含 ID 唯一性与引用存在性检查） |
+| 最后一次成功验证 | 2026-09-14 05:23 UTC；首次推送成功（`origin/main` = `ea3d6d3`，14 个文件，与本地完全一致） |
 | 日志维护者 | GitHub Copilot |
 
 ### 状态定义
@@ -109,6 +109,7 @@
 | T001 | 建立项目骨架与目录结构 | completed | `core/`、`schemas/`、`templates/`、`artifacts/` 四个目录就位 | 无 |
 | T002 | 环境与现状检查（只读） | completed | 确认解释器、依赖缺口、无测试框架、非 Git 仓库 | T001 |
 | T002-A | 落实 Q002 / Q003：Git 版本控制与依赖锁定 | completed | `git init -b main` 成功；`requirements.lock` 与 `pip freeze` 完全一致 | T002、T004 |
+| T002-B | 配置 GitHub 远程仓库并首次推送 | completed | 仓库可见性 PRIVATE，`origin/main` 与本地 `HEAD` 同一提交（14 个文件） | T002-A、T005 |
 | T003 | 实现 ProjectProfile 数据模型 | completed | 三个模型通过 10 项最小验证 | T002 |
 | T004 | 定义 RepositorySummary 数据模型 | completed | 技术栈/依赖/入口文件可通过 Pydantic 校验，每条结论带来源与置信度（26/26 PASS） | T003 |
 | T005 | 定义 SystemMap 数据模型 | completed | 页面/API/路由/数据模型/调用链可通过 Pydantic 校验，并检查重复 ID 与悬空引用（49/49 PASS） | T004 |
@@ -204,7 +205,7 @@ Day 1 清单进度：
 | 核心依赖 | pydantic 2.13.5、pydantic-core 2.46.5、annotated-types 0.8.0、typing-extensions 4.16.0、typing-inspection 0.4.4 |
 | 测试框架 | 暂未安装（本轮明确不引入 pytest） |
 | 依赖锁定 | `requirements.lock`（5 个包，与 `.venv` 当前安装完全一致） |
-| 是否为 Git 仓库 | 是（`main` 分支；2026-09-14 初始提交，13 个文件） |
+| 是否为 Git 仓库 | 是（`main` 分支）；远程 `origin` → `git@github.com:hongweiyuan319-cpu/universal-ai-debug-agent.git`（PRIVATE） |
 
 其他可用但**不应使用**的解释器：`/usr/bin/python3`（3.9.6，CommandLineTools 自带）、`/opt/miniconda3/bin/python`（3.13.13，Conda base）。
 
@@ -239,6 +240,9 @@ diff <(.venv/bin/python -m pip freeze) requirements.lock
 # 版本控制状态
 git status --short
 git log --oneline
+
+# 推送到 GitHub（远程已配好 origin）
+git push
 ```
 
 静态检查：由 Pylance 提供（编辑器解释器已指向 `.venv/bin/python`），当前 `schemas/` 下三个文件均无错误。尚未安装 ruff / flake8。
@@ -253,6 +257,7 @@ git log --oneline
 - 编辑器 / Pylance 解释器已指向 `.venv/bin/python`，无需手动切换。
 - `StartupInfo` 中的 `backend` / `frontend` 只是配置文本，**任何阶段都不得执行**。
 - T003 的验证使用一次性脚本，**未在仓库留下验证文件**。
+- 推送前先看 `git status --short`：仓库是 **PRIVATE**，但一旦改为公开，提交中内置的作者姓名与邮箱会对所有人可见。敏感信息（密码、Token、Cookie、数据库口令）一律不入库。
 
 禁止在本文件中记录密码、Token、Cookie、私钥、数据库口令或其他敏感信息。
 
@@ -607,6 +612,44 @@ T002 确认目录不是 Git 仓库，因此 `.gitignore` 与两个 `.gitkeep` �
 
 ---
 
+### D010：新建独立远程仓库，不覆盖已有的 `QA_ai_agent` 仓库
+
+状态：accepted
+
+日期：2026-09-14
+
+关联任务：T002-B
+
+**背景**
+
+准备推送时发现账号 `hongweiyuan319-cpu` 下已存在 `QA_ai_agent` 仓库，里面是 2026-08-05 的“自动化测试全流程插件原型（登录注册 Demo）”（68 个文件，含 `frontend/`、`qa_plugin/`、`bts/`、`docs/`），与本项目**无共同历史**。两者根目录都存在 `.gitignore`，合并会产生冲突；强推则永久丢失那份原型。
+
+**决定**
+
+新建**独立**私有仓库 `universal-ai-debug-agent`，将本项目推送至该仓库；原有 `QA_ai_agent` 仓库保持不动。
+
+**原因**
+
+两个项目用途不同（一个是自动化测试插件原型，一个是通用 Debug Agent 骨架），共用仓库会让目录结构混淆；任何不可逆的强推都不应作为默认选择。
+
+**影响**
+
+- 正面：两个项目各自独立演进，互不干扰；本项目的历史从初始提交开始，干净可读。
+- 代价：GitHub 上多一个仓库；需要记得向哪个仓库推送。
+- 后续约束：本项目的远程固定为 `origin` → `universal-ai-debug-agent`；若以后要把两个项目合并，必须单独评估并保留双方历史。
+
+**考虑过的替代方案**
+
+- 强推覆盖 `QA_ai_agent`：会永久删除那 68 个文件，未选择。
+- 合并入 `QA_ai_agent`：两套项目共存一个仓库、需处理 `.gitignore` 冲突，未选择。
+- 只保留本地：失去远程备份与协作能力，未选择。
+
+**替代关系**
+
+无（新增，不影响 Q002 / Q003 的结论）。
+
+---
+
 ## 7. 已知限制、风险与阻塞
 
 ### 7.1 已知限制
@@ -616,7 +659,7 @@ T002 确认目录不是 Git 仓库，因此 `.gitignore` 与两个 `.gitkeep` �
 | L001 | 不能读取 `project-profile.yaml`，只能手工构造 `ProjectProfile` | 无法从配置文件驱动流程 | T006 |
 | L002 | 未实现仓库扫描与代码分析（`RepositorySummary` / `SystemMap` 仅有数据契约，无任何代码填充） | 无法产出 `repository_summary.json` 与 `system_map.json` | T008～T011 |
 | L003 | 没有正式测试套件（未安装 pytest） | 回归依赖一次性脚本，历史验证无法复现 | 见 Q001 |
-| L004 | ~~项目未纳入 Git 版本控制~~ **已解决（T002-A）** | 已可回溯变更历史，忽略规则生效 | 已完成 |
+| L004 | ~~项目未纳入 Git 版本控制~~ **已解决（T002-A、T002-B）** | 已有变更历史，并已推送到私有远程仓库 | 已完成 |
 | L005 | 没有命令行入口 | 只能通过交互式 Python 调用 | T007 |
 | L006 | ~~缺少 `SystemMap` 模型~~ **已解决（T005）** | 数据契约已就位 | 已完成 |
 | L007 | ~~依赖未锁定精确版本~~ **已解决（T002-A）** | 已可用 `requirements.lock` 复现 5 个包的精确版本 | 已完成 |
@@ -840,6 +883,89 @@ T002 已确认当前目录**不是** Git 仓库。因此 `.gitignore` 和两个 
 ---
 
 ## 10. 历史任务记录
+
+### T002-B：配置 GitHub 远程仓库并首次推送
+
+状态：completed
+
+开始时间：2026-09-14（会话内，精确时刻未记录）
+
+完成时间：2026-09-14 05:23 UTC（日志记录时刻）
+
+执行者：GitHub Copilot（用户完成浏览器授权）
+
+关联决定：D007、D010
+
+**目标**
+
+把本地项目推送到 GitHub。推送前需要先确认账号下已有的 `QA_ai_agent` 仓库与本项目的关系，避免误覆盖。
+
+**实际修改**
+
+| 位置 | 动作 | 修改内容 |
+|---|---|---|
+| 本地 Git 配置 | 新增 | `origin` → `git@github.com:hongweiyuan319-cpu/universal-ai-debug-agent.git` |
+| `main` 分支 | 新增 | 首次推送，`origin/main` = `ea3d6d3`，并设置上游跟踪 |
+| GitHub | 新增 | 创建 **PRIVATE** 仓库 `hongweiyuan319-cpu/universal-ai-debug-agent` |
+| 本机工具 | 新增 | 安装 `gh` 2.100.0（Homebrew），并登录为 `hongweiyuan319-cpu` |
+| `logs/logs/TASK_LOG_1.md` | 修改 | 本轮日志更新 |
+
+未改动：`schemas/`、`core/`、`templates/`、`artifacts/`、依赖文件；原有 `QA_ai_agent` 仓库**未做任何修改**。
+
+**实现结果**
+
+- 推送前只读检查发现：`QA_ai_agent` 已存在，内含 2026-08-05 的另一套原型（68 个文件），与本项目无共同祖先；两种目录都有 `.gitignore`。
+- 用户选择方案 A（新建独立仓库），仓库名 `universal-ai-debug-agent`，本审查决定记为 D010。
+- 推送结果：`origin/main` 与本地 `HEAD` 同为 `ea3d6d3`；本地与远程均为 14 个文件，内容一一对应。
+- `.venv/`、`__pycache__/`、`.DS_Store` 均未入库。
+
+与原计划存在的差异：本轮不在第 1 周任务清单内，属于用户临时要求的环境任务，已记为 `T002-B`。
+
+**验证证据**
+
+| 验证项 | 命令 | 结果 |
+|---|---|---|
+| SSH 认证 | `ssh -T git@github.com`（BatchMode） | PASS（`Hi hongweiyuan319-cpu!`） |
+| 已有仓库排查 | `git ls-remote <repo>` × 4 个候选名 | PASS（发现 `QA_ai_agent` 已存在且有 1 个提交、68 个文件） |
+| 仓库创建 | `gh repo create universal-ai-debug-agent --private` | PASS |
+| 首次推送 | `git push -u origin main` | PASS（`[new branch] main -> main`，33 个对象，51.28 KiB） |
+| 远程可见性 | `gh repo view --json visibility` | PASS（`PRIVATE`，默认分支 `main`） |
+| 内容一致性 | `git ls-tree -r origin/main` vs `git ls-files` | PASS（两边各 14 个文件） |
+| 提交一致性 | `git rev-parse HEAD` vs `origin/main` | PASS（同为 `ea3d6d3`） |
+
+关键输出摘要：
+
+```text
+✓ Created repository hongweiyuan319-cpu/universal-ai-debug-agent on github.com
+ * [new branch]      main -> main
+## main...origin/main
+本地 14 个 / 远程 14 个
+一致：ea3d6d3
+```
+
+**遇到的问题与处理**
+
+问题：账号下已存在同名意图的仓库 `QA_ai_agent`，且内容完全不相关。
+原因：该仓库是 8 月 5 日的旧原型，并非本项目早期版本。
+处理：没有推送到它、没有强推、没有合并；而是向用户说明情况并请求选择，最终新建独立仓库（D010）。
+
+问题：环境里没有 `gh`，无法在命令行创建仓库。
+原因：之前未安装。
+处理：用 Homebrew 安装 `gh` 2.100.0，用户完成一次浏览器设备码授权（验证码 `401D-D49A`，仅一次性使用）。授权时 gh 询问是否上传 SSH 公钥，选择 **Skip**，因为 `~/.ssh/id_ed25519` 已在账号上注册且能正常认证。
+
+**未完成或未覆盖**
+
+- 未配置 GitHub Actions / CI（属于后期事项，与 Q003 的锁文件配合更好）；
+- 未添加 `README.md`（计划在 T013 / Day 7 编写）；
+- `artifacts/` 产物是否入库仍未决定（Q004）。
+
+**给下一任务的影响**
+
+- 从 T006 起，任务结束时除了提交还应 `git push`；
+- 推送前用 `git status --short` 确认未暂存 `.venv/`、缓存或敏感信息；
+- T006 的远程仓库地址固定为 `origin`（`universal-ai-debug-agent`），不要推到 `QA_ai_agent`。
+
+---
 
 ### T005：定义 SystemMap 数据模型
 
