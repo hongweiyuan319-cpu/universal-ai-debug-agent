@@ -4,7 +4,7 @@
 
 维护原则：顶部“当前快照”随进度更新；底部“历史任务记录”只追加、不覆盖。不要粘贴完整聊天、完整源代码或冗长终端输出。
 
-最后更新：2026-09-14 05:23 UTC
+最后更新：2026-09-14 05:29 UTC
 
 日志维护者：GitHub Copilot
 
@@ -648,6 +648,14 @@ T002 确认目录不是 Git 仓库，因此 `.gitignore` 与两个 `.gitkeep` �
 
 无（新增，不影响 Q002 / Q003 的结论）。
 
+**后续变更（2026-09-14）**
+
+用户在推送完成后明确要求删除旧仓库 `QA_ai_agent`。删除前已用 `gh repo clone --mirror` 做本地完整备份：`~/Desktop/项目/_backup_QA_ai_agent_2026-09-14`（bare 镜像，1 个提交 / 68 个文件 / 224K），需要时可直接推回 GitHub。
+
+- `gh repo delete` 需要 `delete_repo` 权限，已通过 `gh auth refresh -h github.com -s delete_repo` 补授权；
+- 实际执行：`gh repo delete hongweiyuan319-cpu/QA_AI_agent --yes` → 删除成功，再次查询返回 `Could not resolve to a Repository`；
+- 结论：本项目的远程只有 `origin`（`universal-ai-debug-agent`），不再存在“误推到 `QA_ai_agent`”的风险。
+
 ---
 
 ## 7. 已知限制、风险与阻塞
@@ -911,6 +919,8 @@ T002 已确认当前目录**不是** Git 仓库。因此 `.gitignore` 和两个 
 | `logs/logs/TASK_LOG_1.md` | 修改 | 本轮日志更新 |
 
 未改动：`schemas/`、`core/`、`templates/`、`artifacts/`、依赖文件；原有 `QA_ai_agent` 仓库**未做任何修改**。
+
+> 后续（同一天）：该旧仓库已按用户要求删除，删除前做了本地完整镜像备份；详见 D010 的“后续变更”。
 
 **实现结果**
 
