@@ -2,3 +2,8 @@
 __pycache__/
 *.pyc
 .DS_Store
+
+# 运行期产物：默认不提交到 Git
+# 只忽略 artifacts/ 里的内容；目录本身和 .gitkeep 继续保留（便于保留目录结构）
+artifacts/*
+!artifacts/.gitkeep

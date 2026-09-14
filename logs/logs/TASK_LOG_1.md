@@ -4,7 +4,7 @@
 
 维护原则：顶部“当前快照”随进度更新；底部“历史任务记录”只追加、不覆盖。不要粘贴完整聊天、完整源代码或冗长终端输出。
 
-最后更新：2026-09-14 05:31 UTC
+最后更新：2026-09-14 05:44 UTC
 
 日志维护者：GitHub Copilot
 
@@ -36,6 +36,8 @@
 
 当前里程碑：Week 1 / 代码理解原型
 
+当前阶段：**Day 2 · 仓库扫描与技术栈识别**（Day 1 骨架与数据模型已完成 6/6）
+
 当前阶段目标：让 Agent 在不依赖人工讲解的情况下读懂一个 React + Flask 项目的主要结构，并输出可审阅、可追溯的 `system_map.json`。
 
 ### 1.3 当前范围
@@ -64,6 +66,7 @@
 - 定义并校验“系统地图”的数据格式（`SystemMap` / `FrontendPage` / `FrontendRequest` / `BackendRoute` / `DataModel` / `CallChain` 及 3 个枚举），并检查同类对象 ID 是否重复、调用链引用是否真实存在；
 - 所有“结论型”数据强制携带来源类型、来源文件、定位与 0～1 置信度；
 - 提供一份人工可填的项目档案模板 `templates/project-profile.yaml`（键名与模型严格一致，带中文注释与示例规则）；
+- 提供命令行入口 `run_discovery.py --task-id <ID> --profile <PATH>`，校验任务 ID 与档案文件存在性，并建立 `artifacts/task_<id>/` 任务目录；
 - 拒绝空字符串、纯空格字符串、拼错的字段名、非 http/https 的 `base_url`、越界置信度、非法的来源类型、非法 HTTP 方法、无效状态码；
 - 把模型安全地转换为 Python 字典与 JSON，并导出 JSON Schema。
 
@@ -73,7 +76,7 @@
 - 扫描仓库、识别技术栈与入口文件（只有数据契约，没有扫描逻辑）；
 - 识别 Flask 路由、React 页面、表单字段、调用链（属于 T009～T011）；
 - **自动生成 `system_map.json`**：`SystemMap` 目前只能手工构造，没有任何代码去填充它；
-- 通过命令行一条命令跑完整个发现流程。
+- 通过命令行“一条命令跑完整个发现流程”：**有命令行入口不等于已经实现仓库扫描** —— 现在只能创建空的任务目录。
 
 ---
 
@@ -81,13 +84,13 @@
 
 | 项目 | 当前值 |
 |---|---|
-| 当前任务 | T006：创建 project-profile.yaml 模板 |
+| 当前任务 | T007：建立 run_discovery.py 命令行入口 |
 | 当前状态 | completed |
-| 上一个完成任务 | T002-B：配置 GitHub 远程仓库并首次推送 |
-| 下一任务 | T007：建立 run_discovery.py 命令行入口 |
-| 当前里程碑完成度 | Day 1 清单 5/6 项；Week 1 共 7 天，处于 Day 1 |
+| 上一个完成任务 | T006：创建 project-profile.yaml 模板 |
+| 下一任务 | T008：仓库扫描与技术栈识别（Day 2） |
+| 当前里程碑完成度 | **Day 1 已完成（6/6）**；Week 1 共 7 天，已进入 Day 2 |
 | 阻塞项 | 无 |
-| 最后一次成功验证 | 2026-09-14 05:31 UTC；模板一致性验证（17/17 PASS，覆盖任务要求的 12 项） |
+| 最后一次成功验证 | 2026-09-14 05:44 UTC；run_discovery.py 验证（28/28 PASS，覆盖任务要求的 22 项） |
 | 日志维护者 | GitHub Copilot |
 
 ### 状态定义
@@ -115,7 +118,7 @@
 | T004 | 定义 RepositorySummary 数据模型 | completed | 技术栈/依赖/入口文件可通过 Pydantic 校验，每条结论带来源与置信度（26/26 PASS） | T003 |
 | T005 | 定义 SystemMap 数据模型 | completed | 页面/API/路由/数据模型/调用链可通过 Pydantic 校验，并检查重复 ID 与悬空引用（49/49 PASS） | T004 |
 | T006 | 创建 project-profile.yaml 模板 | completed | 键名与 `ProjectProfile` / `StartupInfo` / `BusinessRule` 完全一致，含中文注释与 3 条示例规则（17/17 PASS） | T003 |
-| T007 | 建立 run_discovery.py 命令行入口 | planned | 一条命令生成 `artifacts/task_<id>/` 目录 | T006 |
+| T007 | 建立 run_discovery.py 命令行入口 | completed | `--task-id` + `--profile` 生成 `artifacts/task_<id>/`；非法 ID 与已存在目录均被拒（28/28 PASS） | T006 |
 | T008 | 仓库扫描与技术栈识别（Day 2） | planned | 输出 `repository_summary.json` | T007 |
 | T009 | Flask 后端分析器（Day 3） | planned | 输出 `backend_apis` 列表 | T008 |
 | T010 | React 前端分析器（Day 4） | planned | 输出 `frontend_pages`、`frontend_requests` | T009 |
@@ -140,7 +143,7 @@ Day 1 清单进度：
 - [x] 定义 `ProjectProfile`：项目名、仓库路径、启动信息、业务规则；
 - [x] 定义 `RepositorySummary`：语言、框架、依赖、入口文件；
 - [x] 定义 `SystemMap`：页面、API、后端路由、数据模型、调用链；
-- [ ] 建立 `run_discovery.py` 命令行入口；
+- [x] 建立 `run_discovery.py` 命令行入口；
 - [x] 创建 `project-profile.yaml` 模板。
 
 ---
@@ -159,15 +162,16 @@ Day 1 清单进度：
 | `templates/` | 配置模板目录，含 `project-profile.yaml` | 已实现 | T006 |
 | `templates/project-profile.yaml` | 人工填写的项目档案模板（键名对齐当前模型） | 已验证 | T006 |
 | `templates/.gitkeep` | 空目录占位；已有真实文件后保留（无害），未删除 | 保留 | T006 |
-| `artifacts/` | 运行期产物目录（当前为空，仅 `.gitkeep`） | 未开始 | T001 |
+| `artifacts/` | 运行期产物目录（当前只有 `.gitkeep`；里面的运行结果默认不进入 Git） | 已就绪 | T007 |
+| `run_discovery.py` | 命令行入口：校验参数并创建 `artifacts/task_<id>/`（**尚不扫描仓库**） | 已验证 | T007 |
 | `requirements.txt` | 运行依赖声明（`pydantic>=2,<3`），注释说明锁文件用法 | 已验证 | T002-A |
 | `requirements.lock` | 精确版本锁定（`pip freeze` 产物，5 个包） | 已验证 | T002-A |
-| `.gitignore` | 忽略 `.venv/`、`__pycache__/`、`*.pyc`、`.DS_Store` | 已生效（T002-A 起纳入 Git） | T002-A |
+| `.gitignore` | 忽略 `.venv/`、`__pycache__/`、`*.pyc`、`.DS_Store`，以及 `artifacts/*`（保留 `.gitkeep`） | 已验证 | T007 |
 | `.venv/` | 项目专属虚拟环境（Python 3.12.13） | 已验证 | T003 |
 | `logs/universal-ai-debug-agent-design.md` | 总体设计文档（V1 范围、架构、目录规划） | 已实现 | 无 |
 | `logs/week-1-code-understanding-plan.md` | 第 1 周任务清单（Day 1～Day 7） | 已实现 | 无 |
 | `logs/logs/TASK_LOG_template.md` | 本日志的模板与维护规则 | 已实现 | 无 |
-| `logs/logs/TASK_LOG_1.md` | 本文件 | 已实现 | T006 |
+| `logs/logs/TASK_LOG_1.md` | 本文件 | 已实现 | T007 |
 
 尚未建立（属于 V1 后期，本阶段不需要）：`app/`、`executors/`、`projects/`。
 
@@ -698,6 +702,88 @@ T002 确认目录不是 Git 仓库，因此 `.gitignore` 与两个 `.gitkeep` �
 
 ---
 
+### D012：`artifacts/` 运行产物默认不进入 Git，但保留 `.gitkeep`
+
+状态：accepted
+
+日期：2026-09-14
+
+关联任务：T007（关闭 Q004，相关 D007）
+
+**背景**
+
+T007 起，每次运行都会生成 `artifacts/task_<id>/`；而 `.gitignore` 原先没有忽略 `artifacts/`，产物会被 Git 全部跟踪，提交历史会被生成物污染。
+
+**决定**
+
+`.gitignore` 增加两行：`artifacts/*` 与 `!artifacts/.gitkeep`。即忽略 `artifacts/` 内的所有内容，但目录本身与 `.gitkeep` 继续保留；不影响其他目录。
+
+**原因**
+
+运行产物是“这一次跑出来的结果”，不是源码；但目录结构和存根文件值得保留，便于新人克隆后就能看到 `artifacts/` 的存在。写成两行而不是一行 `artifacts/`，正是为了只忽略内容、不忽略目录。
+
+**影响**
+
+- 正面：提交历史干净；不会误把几十个 JSON / 截图提上去。
+- 代价：产物不再能通过 Git 回溯，需要留存时要手工复制到 `docs/` 或 `examples/`。
+- 后续约束：不得改成忽略整个 `artifacts/`；不得用 `git add -f` 把产物强行加进提交。
+
+**考虑过的替代方案**
+
+- 写 `artifacts/`（连目录占位一起忽略，未选择）；
+- 全部入库（污染历史，未选择）；
+- 把产物写到项目外目录（与设计文档的目录规划冲突，未选择）。
+
+**替代关系**
+
+关闭 Q004（用户 2026-09-14 确认）。
+
+---
+
+### D013：`--profile` 在 T007 只校验存在性，不解析
+
+状态：accepted
+
+日期：2026-09-14
+
+关联任务：T007（关闭 Q005，相关 D005、L001）
+
+**背景**
+
+T007 需要接收档案文件路径，但项目仍无 YAML 解析器。若此时引入 `PyYAML`，会同时扩大范围与依赖；若完全不接收档案路径，又无法知道“为哪个项目跑”。
+
+**决定**
+
+`--profile` 为必填参数，但只做两项检查：路径存在、且是普通文件。**不 import yaml、不读取内容、不构造 `ProjectProfile`**。解析与合并留到 T012。
+
+**原因**
+
+让 T007 保持“只初始化任务目录”的单一职责，把“引入依赖并真正解析”这个不可逆的选择留给 T012；同时帮助信息与成功输出都明写“未解析”，避免让人误以为档案已经生效。
+
+**影响**
+
+- 正面：依赖仍只有 `pydantic`；职责单一、易于回归。
+- 代价：用户传一份格式错误的 YAML 也不会在这里被发现，要到 T012 才会报错。
+- 后续约束：T012 引入 `PyYAML` 时必须同步更新 `requirements.txt` 与 `requirements.lock`（见 D008），并补上“读取 YAML → 构造 `ProjectProfile`”的端到端验证。
+
+**考虑过的替代方案**
+
+- T007 直接引入 `PyYAML` 并解析（范围与依赖扩大，未选择）；
+- 把 `--profile` 改为可选（无法判断为哪个项目跑，未选择）。
+
+**与 week-1 计划的差异（已记录，非阻塞）**
+
+计划文件第 7 节的示例命令使用 `--repo <仓库路径> --profile <档案>`，而 T007 按用户本轮明确要求采用 `--task-id <ID> --profile <档案>`：
+
+- `--repo` 属于“扫描阶段”的参数，T008 实现仓库扫描时再补上（**是补一个参数，不是改名**），届时计划的示例命令即可直接用；
+- 本轮不引入未使用的参数，也不提供 `--task` / `--id` 之类的别名，避免含义重复。
+
+**替代关系**
+
+关闭 Q005（用户 2026-09-14 选择方案 B）。
+
+---
+
 ## 7. 已知限制、风险与阻塞
 
 ### 7.1 已知限制
@@ -705,10 +791,10 @@ T002 确认目录不是 Git 仓库，因此 `.gitignore` 与两个 `.gitkeep` �
 | ID | 限制 | 影响 | 计划处理阶段 |
 |---|---|---|---|
 | L001 | 模板已就位（T006），但仍**没有 YAML 解析器**，只能手工构造 `ProjectProfile` | 无法从配置文件驱动流程 | T012 |
-| L002 | 未实现仓库扫描与代码分析（`RepositorySummary` / `SystemMap` 仅有数据契约，无任何代码填充） | 无法产出 `repository_summary.json` 与 `system_map.json` | T008～T011 |
+| L002 | **有命令行入口与数据契约，但没有扫描能力**（`run_discovery.py` 目前只能创建目录） | 无法产出 `repository_summary.json` 与 `system_map.json` | T008～T011 |
 | L003 | 没有正式测试套件（未安装 pytest） | 回归依赖一次性脚本，历史验证无法复现 | 见 Q001 |
 | L004 | ~~项目未纳入 Git 版本控制~~ **已解决（T002-A、T002-B）** | 已有变更历史，并已推送到私有远程仓库 | 已完成 |
-| L005 | 没有命令行入口 | 只能通过交互式 Python 调用 | T007 |
+| L005 | ~~没有命令行入口~~ **已解决（T007）** | 可用 `run_discovery.py` 初始化任务目录 | 已完成 |
 | L006 | ~~缺少 `SystemMap` 模型~~ **已解决（T005）** | 数据契约已就位 | 已完成 |
 | L007 | ~~依赖未锁定精确版本~~ **已解决（T002-A）** | 已可用 `requirements.lock` 复现 5 个包的精确版本 | 已完成 |
 
@@ -720,7 +806,7 @@ T002 确认目录不是 Git 仓库，因此 `.gitignore` 与两个 `.gitkeep` �
 | R002 | 依赖用户级 pip 镜像源配置，换机器或换 CI 时拉取结果不一致 | 低 | 低 | 已记录镜像源（5.5）；**锁文件进一步降低影响（T002-A）**；CI 中仍需显式指定 `--index-url` |
 | R003 | 模型层不校验路径存在性，若调用方忘记检查，会把“路径写错”当成“仓库为空” | 中 | 中 | T008 必须显式映射为环境问题并补验证（见 D005） |
 | R004 | ~~`declared`（表格声明）/ `observed`（代码事实）/ `inferred`（模型推断）三类来源尚未落到模型~~ **已解决（T004 + T005）** | 低 | 高 | `SourceType` + `Finding` 已把来源类型、来源文件、定位、置信度固化为必填（D006）；`SystemMap` 五类对象均要求至少一条证据（D009）。剩余风险转移到“分析器写错来源”，由 T009～T011 自行举证 |
-| R005 | 缺乏回归测试，后续改动可能悄悄破坏已通过的校验（T003 的 10 项、T004 的 26 项、T005 的 49 项） | 高 | 中 | 见 Q001，尽快建立可重复执行的验证 |
+| R005 | 缺乏回归测试，后续改动可能悄悄破坏已通过的校验（T003 的 10 项、T004 的 26 项、T005 的 49 项、T006 的 17 项、T007 的 28 项） | 高 | 中 | 见 Q001，尽快建立可重复执行的验证 |
 | R006 | `Finding` 强制要求 `line` 或 `snippet`，若 T008 遇到确实无法定位的结论，可能被迫编造位置 | 中 | 中 | 允许用 `snippet` 承载原文；若 T008 反复受阻，再讨论放宽为“至少一项来源定位”并记录决定 |
 | R007 | `SystemMap` 的 ID 引用体系需要稳定的命名约定；若 T009～T011 各自随手生成 ID，可能出现同义不同名、或把链路指向错误对象 | 中 | 中 | 在 T009 开工前先确定并记录 ID 命名约定（例如 `page-xxx` / `req-xxx` / `route-xxx` / `model-xxx` / `chain-xxx`），并由 T011 生成 `SystemMap` 时统一校验 |
 
@@ -734,68 +820,75 @@ T002 确认目录不是 Git 仓库，因此 `.gitignore` 与两个 `.gitkeep` �
 
 ### 8.1 下一任务
 
-任务编号：T007
+任务编号：T008
 
-任务名称：建立 run_discovery.py 命令行入口
+任务名称：仓库扫描与技术栈识别（Day 2）
 
 当前状态：planned
 
-目标：在项目根目录新增 `run_discovery.py`，提供一条命令即可创建 `artifacts/task_<id>/` 任务目录并写出当前能产出的产物；仓库路径不存在时按“环境问题”报错退出。本轮不实现扫描与分析。
+目标：新增 `core/repository_scanner.py`，扫描被测仓库目录树，识别语言 / 框架 / 依赖 / 前后端入口文件，并把结果写成 `artifacts/task_<id>/repository_summary.json`（`RepositorySummary` 契约已在 T004 定义好）。只做只读扫描，不执行任何项目命令。
 
 **开工前需要先定两件事**：
 
-- **Q004**（`artifacts/` 产物是否入库）：T007 会生成第一个产物，而 `.gitignore` 目前**未忽略** `artifacts/`；不先定就会出现“产物自动进提交”的情况。建议先忽略 `artifacts/`。
-- **Q005**（何时引入 YAML 解析）：决定 T007 的 `--profile` 是“只校验文件存在”还是“直接解析并校验内容”。建议留到 T012。
+- **`--repo` 参数**：T007 只实现了 `--task-id` + `--profile`（见 D013）。T008 需要新增 `--repo <仓库路径>`（建议设为必填）并接进 `run_discovery.py`；是**补参数**而不是改名，week-1 计划第 7 节的示例命令届时即可直接使用。
+- **“当前不支持的项目”怎么表达**：Day 2 要求“对未识别的项目给出明确提示”，但 `RepositorySummary` 目前没有这类字段。三种选择：① 只由 CLI 打印提示并用退出码区分（不改模型）；② 给 `RepositorySummary` 加字段（要改 T004 已验证的模型，需新开决定并重跑 T004 回归）；③ 在任务目录写一份独立的提示文本。建议先用 ①，把改模型留到真需要时。
 
 ### 8.2 开始前必须阅读
 
-- `logs/universal-ai-debug-agent-design.md`（5 执行流程、9 项目目录、10 最终交付输出）
-- `logs/week-1-code-understanding-plan.md`（Day 1 第 5 项、Day 2 产出要求）
-- `schemas/__init__.py`（入口将来要构造哪些模型）
-- 决定 D001、D004、D005、D007、D008
+- `logs/universal-ai-debug-agent-design.md`（4.1 代码理解器、9 项目目录、10 最终交付输出）
+- `logs/week-1-code-understanding-plan.md`（Day 2 详细 Checklist 的 6 项）
+- `schemas/repository_summary.py`（要填充的 `Finding` / `RepositorySummary` 契约）
+- `run_discovery.py`（新参数与产物写在哪里）
+- 决定 D005、D006、D009、D012、D013
 
 ### 8.3 开始前必须检查
 
 - 当前工作目录为 `/Users/hongweiyuan/Desktop/项目/QA_ai_agent`；
-- `.venv/bin/python -V` 输出 `Python 3.12.13`；
-- `.venv/bin/python -c "import pydantic; print(pydantic.VERSION)"` 输出 `2.13.5`；
-- `.venv/bin/python -c "import yaml"` 仍为 `ModuleNotFoundError`（确认当前无 YAML 能力）；
-- `templates/project-profile.yaml` 存在且与本日志描述一致；
-- `artifacts/` 目前只有 `.gitkeep`；
-- 工作区干净（`git status --short` 无输出）。
+- `.venv/bin/python -V` 输出 `Python 3.12.13`；`.venv/bin/python -c "import pydantic; print(pydantic.VERSION)"` 输出 `2.13.5`；
+- `.venv/bin/python -c "import yaml"` 仍为 `ModuleNotFoundError`（T008 不需要 YAML）；
+- `run_discovery.py --help` 仍包含 `--task-id` 与 `--profile`（确认 T007 成果未被改动）；
+- `schemas/` 下四个模块仍可导入；
+- `artifacts/` 里只有 `.gitkeep`，且工作区干净（`git status --short` 无输出）。
+
+**可用的被测仓库线索**：本地镜像备份 `~/Desktop/项目/_backup_QA_ai_agent_2026-09-14` 里存在 `frontend/`（Vite + React + TypeScript）与 `stage1_static/stage3_backend/`（Flask：`app.py` / `db.py` / `init_db.py` / `requirements.txt`），看起来正是 Week 1 需要的“React + Flask 登录注册 Demo”。建议将它检出到**项目之外**的目录（例如 `~/Desktop/项目/login-register-demo`）当扫描对象；开工时先确认其目录结构是否与上述假设一致。
 
 ### 8.4 预计修改
 
-- 新建 `run_discovery.py`（项目根目录）
-- 视 Q004 结论决定是否修改 `.gitignore`（追加 `artifacts/`）
-- 不修改 `schemas/`、`core/`、`templates/`
+- 新建 `core/repository_scanner.py`
+- 修改 `run_discovery.py`（新增 `--repo`，并在任务目录里写出 `repository_summary.json`）
+- 不修改 `schemas/`（除非采纳 8.1 的选项 ②，并重跑 T004 回归）
+- 不改动 `.gitignore`（`artifacts/*` 已生效，见 D012）
 
 ### 8.5 实现要求
 
-- 命令行解析只用标准库 `argparse`，**不引入** `typer` / `click` 等新依赖；
-- 参数至少包括：`--repo`（被测仓库路径）、`--profile`（可选，指向 `project-profile.yaml`）；
-- 先校验 `--repo` 是否真实存在：不存在时以**环境问题**报错并非零退出（见 D005、R003），不要当成数据错误；
-- 创建 `artifacts/task_<id>/` 目录，并在其中写出当前能产出的最小产物；产物内容必须如实说明“尚未扫描，数据为空”，不得伪造扫描结果；
-- **不得执行** `project-profile.yaml` 中的任何启动命令（见 D004）；
-- 输出信息不得包含密码、Token、Cookie 等敏感内容；
-- 本轮不实现 YAML 解析（除非 Q005 另有决定）。
+- 扫描是**只读**操作：不执行 `npm` / `python` / 任何项目命令，不安装依赖，不启动服务，不改动被测仓库的任何文件；
+- 遍历目录树时排除 `node_modules`、`.git`、`__pycache__`、`.venv`、`dist` / `build` 等构建产物；
+- 检测依赖清单：`package.json`、`requirements.txt`、`pyproject.toml`；
+- 识别本周需要的技术栈：React、Vite、Flask、SQLite（识别不到不算错，如实为空或低置信度）；
+- 查找前后端入口文件（例如 `frontend/src/main.tsx`、`stage*_backend/app.py`）；
+- **每一项结论都必须用 `Finding`**：值 + 来源类型（`observed`）+ 来源文件 + 行号或代码片段（至少一个）+ 置信度；凭经验推测的写 `inferred` 且置信度必须 < 1.0（见 D006 / D009）；
+- 仓库路径不存在或不可读 → 按**环境问题**处理（非 0 退出、提示清楚），不要当成“仓库为空”（见 D005、R003）；
+- 产物写到 `artifacts/task_<id>/repository_summary.json`，用 `RepositorySummary.model_dump_json()` 生成，保证能被同一契约重新读回；
+- 输出信息不得包含密码、Token、Cookie 等敏感内容。
 
 ### 8.6 验收标准
 
-- `run_discovery.py --help` 可正常显示参数说明；
-- 用一个真实存在的临时目录作为 `--repo`，能成功生成 `artifacts/task_<id>/` 并退出码为 0；
-- 用一个不存在的路径作为 `--repo`，得到明确的“环境问题”提示且退出码非 0；
-- 重复运行两次不会互相覆盖或报错（需明确并记录任务目录的编号策略）；
-- 全过程未执行任何 YAML 或启动命令；
-- 上述验证由 `.venv/bin/python` 实际执行并全部通过；`schemas/` 无 Pylance 报错；提交后工作区干净。
+- 对一份真实仓库跑通，生成的 `repository_summary.json` 能被 `RepositorySummary.model_validate_json()` 重新读回；
+- 语言 / 框架 / 依赖 / 入口文件四类结论都有内容，且每条都带来源文件与定位；
+- `node_modules` 等目录确实被排除（产物里不出现它们的路径）；
+- 仓库路径不存在时以环境问题报错并非 0 退出；
+- 未识别的项目不会伪装成“识别成功”；
+- 上述验证由 `.venv/bin/python` 实际执行并全部通过；`schemas/` 与 `core/` 无 Pylance 报错；提交后工作区干净。
 
 ### 8.7 本任务不要做
 
-- 不实现仓库扫描、技术栈识别、Flask / React 分析、调用链构建（属于 T008～T011）；
-- 不实现 YAML 读取与合并（属于 T012，除非 Q005 另有决定）；
-- 不安装 `pytest`、`PyYAML` 或其他新依赖；不建立 `tests/` 目录；
-- 不修改 `schemas/`、`core/`、`templates/`；
-- 不开始 T008。
+- 不解析 `project-profile.yaml`、不 import yaml（属于 T012）；
+- 不实现 Flask 路由分析（T009）、React 页面分析（T010）、调用链构建（T011）；
+- 不生成 `system_map.json`，不写任何“占位版”假结果；
+- 不执行被测项目的任何命令、不启动被测服务；
+- 不安装新依赖（`pytest`、`PyYAML` 等）；不建立 `tests/` 目录；
+- 不修改 `schemas/`、`templates/`（除非采纳 8.1 的选项 ② 并重跑回归）；
+- 不开始 T009。
 
 ### 8.8 建议验证命令
 
@@ -805,16 +898,23 @@ cd "/Users/hongweiyuan/Desktop/项目/QA_ai_agent"
 # 1) 环境正确
 .venv/bin/python -c "import sys, pydantic; print(sys.version.split()[0], pydantic.VERSION)"
 
-# 2) 帮助信息
+# 2) 帮助信息应包含 --task-id / --profile / --repo
 .venv/bin/python run_discovery.py --help
 
-# 3) 正常路径：用存在的目录当 --repo
-.venv/bin/python run_discovery.py --repo templates
+# 3) 对真实 Demo 跑一次（路径按 8.3 实际准备）
+.venv/bin/python run_discovery.py --task-id day2 \
+  --repo ~/Desktop/项目/login-register-demo \
+  --profile templates/project-profile.yaml
 
-# 4) 错误路径：不存在的仓库，应报“环境问题”且退出码非 0
-.venv/bin/python run_discovery.py --repo /definitely/not/exist; echo "exit=$?"
+# 4) 产物能被同一契约重新校验
+.venv/bin/python -c "from pathlib import Path; from schemas import RepositorySummary; \
+print(RepositorySummary.model_validate_json(Path('artifacts/task_day2/repository_summary.json').read_text()).repository_path)"
 
-# 5) 回归：三个 schema 模块仍可导入
+# 5) 环境问题：不存在的仓库路径
+.venv/bin/python run_discovery.py --task-id day2b --repo /definitely/not/exist \
+  --profile templates/project-profile.yaml; echo "exit=$?"
+
+# 6) 回归：三个 schema 模块仍可导入
 .venv/bin/python -c "from schemas import ProjectProfile, RepositorySummary, SystemMap; print('ok')"
 ```
 
@@ -912,7 +1012,7 @@ T002 已确认当前目录**不是** Git 仓库。因此 `.gitignore` 和两个 
 
 ### Q004：`artifacts/` 下的运行期产物是否纳入版本控制？
 
-状态：open
+状态：closed（2026-09-14 采纳方案 A，已由 T007 执行）
 
 关联任务：T002-A（由 D007 引出）
 
@@ -934,13 +1034,13 @@ T002 已确认当前目录**不是** Git 仓库。因此 `.gitignore` 和两个 
 
 不阻塞 T005；T007 生成首个产物前决定即可。
 
-**最终答复**：未答复
+**最终答复**：方案 A。用户于 2026-09-14 确认；已在 T007 落地：`.gitignore` 增加 `artifacts/*` 与 `!artifacts/.gitkeep`，`.gitkeep` 仍被跟踪（见 D012）。
 
 ---
 
 ### Q005：YAML 解析（PyYAML）什么时候引入？
 
-状态：open
+状态：closed（2026-09-14 采纳方案 B，已由 T007 执行）
 
 关联任务：T006、T007、T012
 
@@ -962,11 +1062,104 @@ T006 已交付 `templates/project-profile.yaml`，但项目环境**没有 YAML �
 
 不阻塞 T007 开工（可先按方案 B 实现），但必须在 T007 开始前确认。
 
-**最终答复**：未答复
+**最终答复**：方案 B。用户于 2026-09-14 确认；T007 的 `--profile` 只校验“文件存在且是普通文件”，不读取内容、不解析 YAML（见 D013）。引入 `PyYAML` 与真正解析留到 T012。
 
 ---
 
 ## 10. 历史任务记录
+
+### T007：建立 run_discovery.py 命令行入口
+
+状态：completed
+
+开始时间：2026-09-14（会话内，精确时刻未记录）
+
+完成时间：2026-09-14 05:44 UTC（日志记录时刻）
+
+执行者：GitHub Copilot
+
+关联决定：D004、D005、D010、D012、D013
+
+**目标**
+
+在项目根目录新增 `run_discovery.py`：接收 `--task-id` 与 `--profile`，校验任务 ID 与档案文件，创建 `artifacts/task_<id>/`，用退出码区分成功与环境/输入错误。本轮不扫描仓库、不解析 YAML。同时按用户确认的决定修改 `.gitignore`（关闭 Q004）、确认 `--profile` 只检查存在不解析（关闭 Q005）。
+
+**实际修改**
+
+| 文件 | 动作 | 修改内容 |
+|---|---|---|
+| `run_discovery.py` | 新增 | 命令行入口：`--task-id` / `--profile` 校验 + 创建 `artifacts/task_<id>/` |
+| `.gitignore` | 修改 | 追加 `artifacts/*` 与 `!artifacts/.gitkeep` |
+| `logs/logs/TASK_LOG_1.md` | 修改 | 本轮日志更新；关闭 Q004、Q005 |
+| `logs/week-1-code-understanding-plan.md` | 修改 | Day 1 清单第 5 项勾选（6/6） |
+
+未改动：`schemas/`（四个模块均未动）、`core/`、`templates/`；未安装任何新依赖；未留下验证脚本。
+
+**实现结果**
+
+- 参数：只有 `--task-id`（必填）与 `--profile`（必填），**没有**别名或含义重复的参数；解析器只用标准库 `argparse`。
+- 任务 ID 校验采用白名单正则 `^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$`：拒绝空值、纯空格、含空格、含 `/` 或 `\`、含 `.`、含中文、超过 64 字符、以短横线开头。
+- `--profile` 只做两项检查：路径存在、且是普通文件；**未 import yaml、未读取文件内容、未构造 `ProjectProfile`**（见 D013）。
+- 目录定位：以 `Path(__file__).resolve().parent / "artifacts"` 为准，因此从任何工作目录运行，产物都落在项目根目录；另有一道“任务目录必须位于 artifacts/ 之下”的防御检查。
+- 已存在目录：直接返回失败（退出码 5），不删除、不清空、不覆盖；**未提供** `--force` / `--overwrite`。
+- 退出码：0 成功；2 argparse 用法错误；3 profile 问题；4 task-id 不合法；5 目录已存在；6 artifacts 路径或创建失败。错误写 stderr，成功写 stdout；不吐 traceback。
+- 成功信息只说“任务目录初始化成功”，并明确写“尚未扫描任何代码”“仓库扫描将在 T008 实现”，不伪造任何扫描结果。
+- `.gitignore`：`git check-ignore` 实测 `artifacts/task_example/` 命中 `artifacts/*`；`artifacts/.gitkeep` 未被忽略且仍被跟踪。
+
+与原计划存在的差异：参数名不同。week-1 计划第 7 节的示例用 `--repo`，而本轮按用户明确要求采用 `--task-id`；`--repo` 属于扫描阶段参数，留到 T008 补上（是补参数，不是改名），已记入 D013。
+
+**验证证据**
+
+验证方式：`.venv/bin/python` 执行一次性 heredoc 脚本（内含 `subprocess` 调用，未落盘，`tests/` 未建立，未新增依赖）。
+
+| 验证组 | 覆盖内容 | 结果 |
+|---|---|---|
+| 1–3 | `--help` 正常；缺少 `--task-id`、缺少 `--profile` 均非 0 退出 | PASS |
+| 4–5 | profile 不存在 / 指向目录 → 退出码 3，且不创建任何目录 | PASS |
+| 6 | 合法 ID `verify_t007` 成功创建 `artifacts/task_verify_t007/` | PASS |
+| 7–11 | 非法 task-id 全部被拒（`../`、`/`、反斜杠、空格、纯空格、空值、点开头、超长、短横线开头、中文），且未在项目外创建任何目录 | PASS |
+| 12–13 | 已存在目录 → 退出码 5；目录内原有文件内容与数量保持不变 | PASS |
+| 14–15 | 成功退出码 0；失败退出码非 0 | PASS |
+| 16 | 成功信息包含“任务目录初始化成功”，**不含**“扫描完成 / 扫描成功 / 已理解 / 已识别”，并提到 T008 | PASS |
+| 17 | AST 检查：未 import `yaml`，导入集合仅有 `argparse` / `re` / `sys` / `pathlib` / `__future__` | PASS |
+| 18 | 静态：无 `open()` / `read_text()` 等读文件的调用；行为：把 profile 权限改为不可读，脚本仍返回 0（证明未读内容），验后权限已恢复 | PASS |
+| 19–20 | `artifacts/task_example/` 被忽略；`artifacts/.gitkeep` 未被忽略、仍被跟踪 | PASS |
+| 21 | `ProjectProfile` / `RepositorySummary` / `SystemMap` 仍可导入与构造 | PASS |
+| 22 | 从临时目录运行，产物仍落在项目根目录；临时目录里没有生成 `artifacts/` | PASS |
+
+关键输出摘要：
+
+```text
+[PASS] 16. 成功信息不含“扫描完成”等不真实表述
+[PASS] 22. 从非项目根目录运行，产物仍在项目根目录的 artifacts/
+artifacts 清理后: ['.gitkeep']
+通过 28 / 28
+```
+
+静态检查：Pylance 对 `run_discovery.py` 无报错。
+
+**遇到的错误与修正**
+
+问题：第一轮验证 27/28，失败项是“task-id 以短横线开头被拒”。
+原因：裸写 `--task-id -abc` 时，argparse 先把它当成未知选项报错（退出码 2），没走到我们的正则校验（预期退出码 4）。这属于**验证用例的预期写错**，也提醒了一个使用细节。
+处理：修正用例为“两种传入方式都必须非 0 退出”——`--task-id=-abc` 交给正则（退出码 4）、裸写 `-abc` 由 argparse 拦下（退出码 2）；重跑后 28/28 全部通过。
+
+**未完成或未覆盖**
+
+- **有命令行入口 ≠ 已经实现仓库扫描**：当前入口只创建空目录，不生成任何扫描结果；
+- 未解析 `project-profile.yaml`（L001），`--profile` 目前只做存在性检查；
+- `--repo` 参数尚未实现（待 T008）；
+- 临时任务目录的编号策略尚未定义（当前由用户手动指定，重名就报错）；
+- 回归仍依赖一次性脚本，无法重复执行（Q001、R005）。
+
+**给下一任务的影响**
+
+- T008 需要给入口补上 `--repo`（必填），并把 `repository_summary.json` 写进已创建的任务目录；
+- 产物默认不进 Git（D012），T008 不要用 `git add -f` 把产物加进提交；
+- 扫描必须是只读操作，不得执行被测项目的任何命令（D004）；
+- 日志 8.3 记录了一条可用被测仓库的线索：本地镜像备份里包含 `frontend/`（Vite + React + TS）与 `stage1_static/stage3_backend/`（Flask），建议检出到项目外目录当扫描对象，开工时先核实结构。
+
+---
 
 ### T006：创建 project-profile.yaml 模板
 

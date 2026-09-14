@@ -123,7 +123,7 @@ universal-ai-debug-agent/
 - [x] 定义 `ProjectProfile`：项目名、仓库路径、启动信息、业务规则；
 - [x] 定义 `RepositorySummary`：语言、框架、依赖、入口文件；
 - [x] 定义 `SystemMap`：页面、API、后端路由、数据模型、调用链；
-- [ ] 建立 `run_discovery.py` 命令行入口；
+- [x] 建立 `run_discovery.py` 命令行入口；
 - [x] 创建 `project-profile.yaml` 模板。
 
 **产出：** 可被 Pydantic 校验的空 `system_map.json`。
