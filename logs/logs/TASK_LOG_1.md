@@ -1092,7 +1092,7 @@ pydantic: 2.13.5
 **实现结果**
 
 - 仓库已初始化（`main` 分支），初始提交 `118ab14` 共 13 个文件（含本记录）；`.venv/`、`__pycache__/`、`*.pyc`、`.DS_Store` 均未入库，忽略规则经 `git check-ignore -v` 逐条确认命中。
-- 提交身份沿用用户级 Git 配置（Sid Zhang / 2289144379@qq.com），未新增仓库级配置。
+- 提交身份沿用用户级 Git 配置，未新增仓库级配置（具体身份信息不写入本日志，避免公开仓库暴露个人邮箱）。
 - 依赖锁定：`requirements.lock` 与 `.venv/bin/python -m pip freeze` 输出 byte 级一致；可用 `pip install -r requirements.lock` 复现同一环境。
 - `requirements.txt` 与 `requirements.lock` 分工：前者保留升级弹性，后者用于复现验证环境（D008）。
 
