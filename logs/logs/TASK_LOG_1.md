@@ -816,7 +816,7 @@ T002 已确认当前目录**不是** Git 仓库。因此 `.gitignore` 和两个 
 
 **实现结果**
 
-- 仓库已初始化（`main` 分支），初始提交共 13 个文件（含本记录）；`.venv/`、`__pycache__/`、`*.pyc`、`.DS_Store` 均未入库，忽略规则经 `git check-ignore -v` 逐条确认命中。
+- 仓库已初始化（`main` 分支），初始提交 `118ab14` 共 13 个文件（含本记录）；`.venv/`、`__pycache__/`、`*.pyc`、`.DS_Store` 均未入库，忽略规则经 `git check-ignore -v` 逐条确认命中。
 - 提交身份沿用用户级 Git 配置（Sid Zhang / 2289144379@qq.com），未新增仓库级配置。
 - 依赖锁定：`requirements.lock` 与 `.venv/bin/python -m pip freeze` 输出 byte 级一致；可用 `pip install -r requirements.lock` 复现同一环境。
 - `requirements.txt` 与 `requirements.lock` 分工：前者保留升级弹性，后者用于复现验证环境（D008）。
@@ -833,6 +833,8 @@ T002 已确认当前目录**不是** Git 仓库。因此 `.gitignore` 和两个 
 | 入库文件清单 | `git add -A && git status --short` | PASS（13 个文件，全部为 `A`；无 `.venv/`、无 `__pycache__`、无 `.DS_Store`） |
 | 锁文件与当前环境一致 | `diff <(.venv/bin/python -m pip freeze) requirements.lock` | PASS（无输出，完全一致） |
 | 锁文件可解析且已满足 | `.venv/bin/python -m pip install --no-index --dry-run -r requirements.lock` | PASS（5 个包全部 “Requirement already satisfied”，未联网） |
+| 初始提交 | `git add -A && git commit -m …` | PASS（`118ab14`，`13 files changed, 2552 insertions(+)`） |
+| 提交后状态 | `git status --short`；`git ls-files \| wc -l` | PASS（工作区无输出即干净；入库 13 个文件） |
 
 关键输出摘要：
 
