@@ -1,0 +1,11 @@
+# 运行依赖（第 1 周 · 代码理解原型 V0.1）
+# 安装方式（开发期，允许小版本升级）：.venv/bin/python -m pip install -r requirements.txt
+#
+# 版本锁定文件：requirements.lock
+#   - 由 .venv/bin/python -m pip freeze 生成，记录当前验证过的精确版本；
+#   - 需要完全复现验证环境时改用：.venv/bin/python -m pip install -r requirements.lock
+#   - 依赖升级后必须重新生成锁定文件，并重跑验证。
+#
+# 注意：请始终使用项目内的 .venv，不要向系统自带的 Python 3.9 安装依赖。
+
+pydantic>=2,<3
